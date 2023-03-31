@@ -17,6 +17,10 @@ jeśli nie - napisz do Free Software Foundation, Inc., 59 Temple
 Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 */
 
+
+#define AIRPLANE_SPEED 5.0f
+#define FIRST_PERSON true
+
 #define GLM_FORCE_RADIANS
 
 #include <GL/glew.h>
@@ -31,6 +35,9 @@ Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 #include "Model.h"
 #include "Shader.h"
 #include "Camera.h"
+#include "Airplane.h"
+
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -106,7 +113,12 @@ Shader* modelShader;
 
 //Models
 Model* backpack;
+Model* skull;
+Model* airplane_model;
 
+
+//objects
+Airplane* airPlane;
 
 
 //textures
@@ -228,10 +240,15 @@ void init(GLFWwindow* window)
 	lightCubeShader = new Shader("shaders/lightCubeShader.vs", "shaders/lightCubeShader.fs");
 	modelShader = new Shader("shaders/modelShader.vs", "shaders/modelShader.fs");
 	backpack = new Model("models/backpack/backpack.obj");
+	skull = new Model("models/skull/12140_Skull_v3_L2.obj");
+	airplane_model = new Model("models/airplane/11804_Airplane_v2_l2.obj");
+
+
+
 
 	loadTextures();
 
-	cam = new Camera(cameraPos, cameraUp, yaw, pitch);
+	cam = new Camera(false,cameraPos, cameraUp, yaw, pitch);
 	cam->MovementSpeed = cameraSpeed;
 	cam->MouseSensitivity = sensitivity;
 	cam->Zoom = fov;
@@ -239,6 +256,13 @@ void init(GLFWwindow* window)
 	generateCubeBuffers();
 
 	glEnable(GL_DEPTH_TEST);
+
+
+
+	//create airPlane object
+	airPlane = new Airplane(airplane_model, cam, cam->Position, AIRPLANE_SPEED, FIRST_PERSON);
+	//airPlane = new Airplane(airplane_model, glm::vec3(0.0f,0.0f,-5.0f), AIRPLANE_SPEED);
+
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -461,7 +485,7 @@ void drawCube(GLFWwindow* window)
 
 void drawModel(GLFWwindow* window)
 {
-	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// don't forget to enable shader before setting uniforms
@@ -473,38 +497,53 @@ void drawModel(GLFWwindow* window)
 	modelShader->setMat4("projection", projection);
 	modelShader->setMat4("view", view);
 
-	// render the loaded model
+
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+	light = &dirLight;
+
+	// RENDER SKULL MODEL
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	//model = glm::translate(model, glm::vec3(0.0f, 5.0f, 0.0f)); // translate it down so it's at the center of the scene
+	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
 	modelShader->setMat4("model", model);
 	
-	light = &dirLight;
-	backpack->setLightData(light);
+
+	skull->setLightData(light);
 
 	lightCubeShader->use();
 	lightCubeShader->setMat4("projection", projection);
 	lightCubeShader->setMat4("view", view);
-	backpack->setLightData(pointLights,*lightCubeShader,true);
+	skull->setLightData(pointLights,*lightCubeShader,true);
+	skull->Draw(*modelShader);
 
 
 
-	backpack->Draw(*modelShader);
+	// RENDER AIRPLANE MODEL
+	airPlane->update(deltaTime);
 
-	//// also draw the lamp object
-	//lightCubeShader->use();
-	//lightCubeShader->setMat4("projection", projection);
-	//lightCubeShader->setMat4("view", view);
-	//// we now draw as many light bulbs as we have point lights.
-	//glBindVertexArray(lightCubeVAO);
-	//for (unsigned int i = 0; i < 1; i++)
-	//{
-	//	model = glm::mat4(1.0f);
-	//	model = glm::translate(model, pointLights[i].light.position);
-	//	model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
-	//	lightCubeShader->setMat4("model", model);
-	//	glDrawArrays(GL_TRIANGLES, 0, 36);
-	//}
+	model = glm::mat4(1.0f);
+
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); 
+	model = glm::translate(model, airPlane->transform.Position);
+
+
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	model = glm::rotate(model, -glm::radians(airPlane->transform.Yaw + 90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+	model = glm::scale(model, glm::vec3(.002f, .002f, .002f));
+
+	modelShader->setMat4("model", model);
+
+	airPlane->model.setLightData(light);
+	lightCubeShader->use();
+	lightCubeShader->setMat4("projection", projection);
+	lightCubeShader->setMat4("view", view);
+	airPlane->model.setLightData(pointLights, *lightCubeShader, true);
+	airPlane->model.Draw(*modelShader);
+
+
 
 	// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 	// -------------------------------------------------------------------------------
@@ -573,13 +612,36 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	//CAM MOVEMENT
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		cam->ProcessKeyboard(FORWARD, deltaTime);
+		cam->ProcessKeyboard(Camera_Movement::FORWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		cam->ProcessKeyboard(BACKWARD, deltaTime);;
+		cam->ProcessKeyboard(Camera_Movement::BACKWARD, deltaTime);;
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		cam->ProcessKeyboard(LEFT, deltaTime);
+		cam->ProcessKeyboard(Camera_Movement::LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		cam->ProcessKeyboard(RIGHT, deltaTime);
+		cam->ProcessKeyboard(Camera_Movement::RIGHT, deltaTime);
+
+
+	// AIRPLANE MOVEMENT
+
+	if (key == GLFW_KEY_A && action == GLFW_RELEASE)
+	{
+		airPlane->onMovementRelease(Move_direction::M_LEFT);
+	}
+	if (key == GLFW_KEY_D && action == GLFW_RELEASE)
+	{
+		airPlane->onMovementRelease(Move_direction::M_RIGHT);
+	}
+
+	if (key == GLFW_KEY_W && action == GLFW_REPEAT)
+		airPlane->processMovement(Move_direction::M_FORWARD, deltaTime);
+	if (key == GLFW_KEY_S && action == GLFW_REPEAT)
+		airPlane->processMovement(Move_direction::M_BACKWARD, deltaTime);
+	if (key == GLFW_KEY_A && action == GLFW_REPEAT)
+		airPlane->processMovement(Move_direction::M_LEFT, deltaTime);
+	if (key == GLFW_KEY_D && action == GLFW_REPEAT)
+		airPlane->processMovement(Move_direction::M_RIGHT, deltaTime);
+
+
 
 
 }

@@ -18,8 +18,6 @@ void PointerLight::setup()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
-    std::cout << "setup\n";
-    std::cout << VAO << std::endl;
 
 }
 
@@ -56,6 +54,6 @@ void PointerLight::PointerLight::draw(Shader& shader)
     shader.setMat4("model", model);
     shader.setVec3("color", light.color);
     glDrawArrays(GL_TRIANGLES, 0, 36);
-    std::cout << VAO << std::endl;
+
 
 }
