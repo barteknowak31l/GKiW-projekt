@@ -15,6 +15,8 @@
 #include "Transform.h"
 
 
+
+// attached camera positions  
 const glm::vec3 thirdPersonCamOffset = glm::vec3(0.0f, 1.0f, -4.0f);
 const glm::vec3 firstPersonCamOffset = glm::vec3(0.0f, .2f, 0.5f);
 
@@ -29,8 +31,12 @@ public:
 	bool isPlayer;
 	bool firstPerson = false;
 
-	float speed;
+	//used for animating rotation on Z axis during turn
+	float yawAnimation = 0.0f;
+	
 
+	float yaw = 0.0f;
+	float speed;
 	//constructor of airplane without camera
 	Airplane(Model* _model,glm::vec3 pos, float spd);
 
@@ -42,14 +48,23 @@ public:
 	void onMovementRelease(Move_direction dir);
 
 	void update(float deltaTime);
+	void reset(glm::vec3 offset);
+	void setOffset(glm::vec3 offset);
+
 
 private:
-	float yaw = 0.0f;
-	float yawDelta = 150.0f;
-	float yawMax = 30.0f;
+
+	float yawDelta = 60.0f;
+	float yawMax = 360.0f;
+
+	float yawAnimationMax = 30.0f;
+	float yawAnimationDelta = 25.0f;
+
 	bool decrementYaw = false;
 	bool incrementYaw = false;
 	bool changeYaw = false;
+	bool isRotatePressed = false;
+
 
 };
 #endif

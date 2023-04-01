@@ -44,6 +44,8 @@ public:
     float MouseSensitivity;
     float Zoom;
 
+
+    glm::vec3 parentPosition = glm::vec3(0.0f, 0.0f, 0.0f);
     bool enableMovement;
 
     Camera()
@@ -76,7 +78,7 @@ public:
     // returns the view matrix calculated using Euler Angles and the LookAt Matrix
     glm::mat4 GetViewMatrix()
     {
-        return glm::lookAt(Position, Position + Front, Up);
+        return glm::lookAt(Position,parentPosition, Up);
     }
 
     // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
@@ -101,7 +103,7 @@ public:
     // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
     void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true)
     {
-       
+        if (!enableMovement) return;
 
         xoffset *= MouseSensitivity;
         yoffset *= MouseSensitivity;
@@ -144,6 +146,15 @@ public:
     void setRoll(float r)
     {
         Roll = ROLL + r;
+        updateCameraVectors();
+    }
+
+
+    void setRotation(float p, float y, float r)
+    {
+        Pitch = p;
+        Yaw = y;
+        Roll = r;
         updateCameraVectors();
     }
 

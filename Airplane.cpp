@@ -38,43 +38,56 @@ Airplane::Airplane(Model* _model, Camera* _camera, glm::vec3 pos, float spd, boo
 
 void Airplane::processMovement(Move_direction direction, float deltaTime)
 {
-	//changeYaw = false;
-	//decrementYaw = false;
-	//incrementYaw = false;
+	isRotatePressed =  (direction == M_RIGHT || direction == M_LEFT);		
+
 
 	float velocity = speed * deltaTime;
 
-	if(direction == M_FORWARD || direction == M_BACKWARD)
-	transform.Move(direction, velocity);
-
+	if (direction == M_FORWARD || direction == M_BACKWARD)
+		transform.Move(direction, velocity);
 
 	if (direction == M_RIGHT)
+	{
+		yawAnimation += yawAnimationDelta * deltaTime;
 		yaw += yawDelta * deltaTime;
+	}
 	if (direction == M_LEFT)
-		yaw -= yawDelta * deltaTime;
+	{
+			yawAnimation -= yawAnimationDelta * deltaTime;
+			yaw -= yawDelta * deltaTime;
+	}
+
+	if (yawAnimation > yawAnimationMax)
+		yawAnimation = yawAnimationMax;
+	if (yawAnimation < -yawAnimationMax)
+		yawAnimation = -yawAnimationMax;
 
 	if (yaw > yawMax)
-		yaw = yawMax;
+		yaw = 0;
 	if (yaw < -yawMax)
-		yaw = -yawMax;
-
+		yaw = 0;
 
 	//update camera position - camera.setPosition(position+ offset)
 
 	
 	if (isPlayer)
 	{
-		transform.SetRotation(glm::vec3(PITCH, YAW, ROLL));
+
 
 		if(firstPerson)
-		camera->setRoll(yaw);
-		
-		camera->SetPosition(transform.Position + cameraOffset.x * transform.Right + cameraOffset.y * transform.Up + cameraOffset * transform.Front);
+			camera->setRoll(yaw);
+
+			
+
+		//transform.SetRotation(glm::vec3(PITCH, std::clamp(transform.Yaw,-360.0f,360.0f), ROLL));
+		camera->parentPosition = glm::vec3(transform.Position.x, transform.Position.y,transform.Position.z);
+
+		camera->SetPosition(transform.Position + cameraOffset.x * transform.Right + cameraOffset.y * transform.Up + cameraOffset.z * transform.Front);
 
 	}
 
+	transform.SetRotation(glm::vec3(PITCH, YAW + yaw ,ROLL));
 
-	transform.SetRotation(glm::vec3(PITCH, YAW + yaw, ROLL));
 
 }
 
@@ -82,45 +95,62 @@ void Airplane::onMovementRelease(Move_direction dir)
 {
 	if (!isPlayer) return;
 
+
 	if (dir == M_LEFT || dir == M_RIGHT)
 	{
+		isRotatePressed = false;
 		changeYaw = true;
-
-		decrementYaw = yaw > 0;
-		incrementYaw = yaw < 0;
-
-		// transform.SetRotation(glm::vec3(PITCH, YAW, ROLL));
-		// camera->SetPosition(transform.Position + cameraOffset.x * transform.Right + cameraOffset.y * transform.Up + cameraOffset * transform.Front);
+		decrementYaw = yawAnimation > 0;
+		incrementYaw = yawAnimation < 0;
 	}
 }
 
 void Airplane::update(float deltaTime)
 {
-	if (changeYaw)
+
+	if (changeYaw && !isRotatePressed)
 	{
 
 		if (decrementYaw)
 		{
-			yaw -= yawDelta * deltaTime;
-			decrementYaw = yaw > 0;
-			changeYaw = yaw > 0;
+			yawAnimation -= yawAnimationDelta * deltaTime;
+			decrementYaw = yawAnimation > 0;
+			changeYaw = yawAnimation > 0;
 		}
 
 		if (incrementYaw)
 		{
-			yaw += yawDelta * deltaTime;
-			incrementYaw = yaw < 0;
-			changeYaw = yaw < 0;
-		}
+			yawAnimation += yawAnimationDelta * deltaTime;
+			incrementYaw = yawAnimation < 0;
+			changeYaw = yawAnimation < 0;
 
-		if (isPlayer)
-		{
-			transform.SetRotation(glm::vec3(PITCH, YAW, ROLL));
-			if (firstPerson)
-				camera->setRoll(yaw);
-			camera->SetPosition(transform.Position + cameraOffset.x * transform.Right + cameraOffset.y * transform.Up + cameraOffset * transform.Front);
 		}
-		transform.SetRotation(glm::vec3(PITCH, YAW + yaw, ROLL));
-
 	}
+
+	if (abs(yawAnimation) <=0.1)
+	{
+		yawAnimation = 0;
+		incrementYaw = false;
+		decrementYaw = false;
+	}
+
+
+
+
+}
+
+void Airplane::reset(glm::vec3 offset)
+{
+	transform.SetPosition(offset);
+	transform.SetRotation(glm::vec3(PITCH, YAW, ROLL));
+	camera->parentPosition = glm::vec3(transform.Position.x, transform.Position.y, transform.Position.z);
+	camera->SetPosition(transform.Position + cameraOffset.x * transform.Right + cameraOffset.y * transform.Up + cameraOffset.z * transform.Front);
+	camera->setRotation(PITCH, YAW, ROLL);
+	yawAnimation = 0;
+	yaw = 0;
+}
+
+void Airplane::setOffset(glm::vec3 offset)
+{
+	transform.SetPosition(offset);
 }
