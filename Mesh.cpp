@@ -10,7 +10,6 @@ Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture
     this->material = material;
 
     setupMesh();
-    setupLights();
 }
 void Mesh::setupMesh()
 {
@@ -46,26 +45,10 @@ void Mesh::setupMesh()
     // vertex bitangent
     glEnableVertexAttribArray(4);
     glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
-    // ids
-    glEnableVertexAttribArray(5);
-    glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, m_BoneIDs));
 
-    // weights
-    glEnableVertexAttribArray(6);
-    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));
     glBindVertexArray(0);
 }
 
-
-void Mesh::setupLights()
-{
-    directionalLight.direction = glm::vec3(1.2f, 1.0f, -2.0f);
-    directionalLight.color = glm::vec3(1.0f, 1.0f, 1.0f);
-    directionalLight.ambient = glm::vec3(0.1f, 0.1f, 0.1f);
-    directionalLight.diffuse = glm::vec3(0.1f, 0.1f, 0.1f);
-    directionalLight.specular = glm::vec3(0.1f, 0.1f, 0.1f);
-
-}
 
 void Mesh::sendMaterialToShader(Shader& shader)
 {
@@ -77,12 +60,13 @@ void Mesh::sendMaterialToShader(Shader& shader)
 
 void Mesh::sendLightsToShader(Shader& shader)
 {
+
     // directional light
-    shader.setVec3("dirLight.direction", directionalLight.direction);
-    shader.setVec3("dirLight.color", directionalLight.color);
-    shader.setVec3("dirLight.ambient", directionalLight.ambient);
-    shader.setVec3("dirLight.diffuse", directionalLight.diffuse);
-    shader.setVec3("dirLight.specular", directionalLight.specular);
+    shader.setVec3("dirLight.direction", model->directionalLight.light.direction);
+    shader.setVec3("dirLight.color", model->directionalLight.light.color);
+    shader.setVec3("dirLight.ambient", model->directionalLight.light.ambient);
+    shader.setVec3("dirLight.diffuse", model->directionalLight.light.diffuse);
+    shader.setVec3("dirLight.specular", model->directionalLight.light.specular);
 
     // point lights
     shader.setInt("numOfPointLights", model->pointLights.size());
@@ -105,48 +89,6 @@ void Mesh::sendLightsToShader(Shader& shader)
 
 
 
-}
-
-
-void Mesh::SetLightData(Light_Types type, DirLight light)
-{
-    if (type != DIRECTIONAL)
-    {
-        std::cout << "Failed to set DIRECTIONAL LIGHT data\n";
-    }
-
-    directionalLight = light;
-}
-
-void Mesh::SetLightData(Light_Types type, static vector<PointerLight> lights)
-{
-    if (type != POINT)
-    {
-        std::cout << "Failed to set POINT LIGHT data\n";
-    }
-
-    vector<PointLight> _lights;
-    for (int i = 0; i < lights.size(); i++)
-    {
-
-        _lights.push_back(lights[i].light);
-        std::cout<<_lights[i].position.x << " dziala jeszcze\n";
-    }
-
-    pointLights = _lights;
-    std::cout << "dziala jeszcze\n";
-}
-
-
-
-void Mesh::SetLightData(Light_Types type, SpotLight light)
-{
-    if (type != SPOT)
-    {
-        std::cout << "Failed to set SPOT LIGHT data\n";
-    }
-
-    spotLight = light;
 }
 
 

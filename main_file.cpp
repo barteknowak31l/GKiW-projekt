@@ -1,29 +1,8 @@
-/*
-Niniejszy program jest wolnym oprogramowaniem; możesz go
-rozprowadzać dalej i / lub modyfikować na warunkach Powszechnej
-Licencji Publicznej GNU, wydanej przez Fundację Wolnego
-Oprogramowania - według wersji 2 tej Licencji lub(według twojego
-wyboru) którejś z późniejszych wersji.
-
-Niniejszy program rozpowszechniany jest z nadzieją, iż będzie on
-użyteczny - jednak BEZ JAKIEJKOLWIEK GWARANCJI, nawet domyślnej
-gwarancji PRZYDATNOŚCI HANDLOWEJ albo PRZYDATNOŚCI DO OKREŚLONYCH
-ZASTOSOWAŃ.W celu uzyskania bliższych informacji sięgnij do
-Powszechnej Licencji Publicznej GNU.
-
-Z pewnością wraz z niniejszym programem otrzymałeś też egzemplarz
-Powszechnej Licencji Publicznej GNU(GNU General Public License);
-jeśli nie - napisz do Free Software Foundation, Inc., 59 Temple
-Place, Fifth Floor, Boston, MA  02110 - 1301  USA
-*/
-
-
-
-// settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
-const float AIRPLANE_SPEED = 1.0f;
-const bool FIRST_PERSON = false;
+//
+//	STEROWANIE: W A S D - MOVEMENT
+//				R - RESET
+//				ESC - KONIEC
+//
 
 #define GLM_FORCE_RADIANS
 
@@ -48,14 +27,25 @@ const bool FIRST_PERSON = false;
 
 
 
+// settings
+const unsigned int SCR_WIDTH = 1920; //800;
+const unsigned int SCR_HEIGHT = 1080; // 600;
+const float AIRPLANE_SPEED = 2.0f;
+const bool FIRST_PERSON = false;
+const float FOV = 45.0f;
 
 
 
+// function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 unsigned int loadTexture(char const* path);
 void loadTextures();
+void processInput();
+GLFWwindow* initOpenGL();
+void drawSkulls(glm::mat4 projection, glm::mat4 view);
+
 
 //Procedura obsługi błędów
 void error_callback(int error, const char* description) {
@@ -63,40 +53,38 @@ void error_callback(int error, const char* description) {
 }
 
 
-
+// handles window resizing
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-	glViewport(0, 0, width, height);
+	 glViewport(0, 0, width, height);
 }
 
 
-//////////LEARNOPENGL TUTORIAL  SECTION/////////////////////////////////
 
-
-//CAM
+//CAMERA
 Camera* cam;
+
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 const float cameraSpeed = 10.0f; // adjust accordingly
 
 float pitch = 0.0f, yaw = -90.0f, roll = 0.0f;  //camera rotation angles
-float lastX = 400, lastY = 300;	//last cursor positon 
-float fov = 45.0f;
+float lastX = SCR_WIDTH/2.0f, lastY = SCR_HEIGHT/2.0f;	//last cursor positon 
+float fov = FOV;
 const float sensitivity = 0.1f; //mouse sensitivity
 bool firstMouseInput = true;
 
 //time
-float currentFrame;
+float currentFrame = 0.0f;
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
 
 // lighting
-glm::vec3 lightPos(0.2f, -1.0f, -0.3f);
-
-Light* light;	//light pointer
+Light* light;	//universal light pointer
 DirectionalLight dirLight;
+glm::vec3 dirLightDirecrion(0.2f, -1.0f, -0.3f);
 vector<PointerLight> pointLights;
 PointerLight* pointLight;
 PointerLight* pointLight2;
@@ -109,7 +97,6 @@ glm::vec3 pointLightPos[] =
 	glm::vec3(-5.0f, 1.0f, 0.0f)};
 
 //shaders
-Shader* lightingShader;
 Shader* lightCubeShader;
 Shader* modelShader;
 
@@ -124,21 +111,14 @@ Model* airplane_model;
 Airplane* airPlane;
 glm::vec3 startingPoint = glm::vec3(0.0f, 0.0f, -2.5f);
 
-//textures
-unsigned int texture;
-unsigned int texture2;
-unsigned int diffuseMap, specularMap, emmisionMap;
-
-
 //temporary input - to do: implement Input class
-bool input[4] = { false, false, false, false }; // is pressed: w a s d
+bool input[4] = { false, false, false, false }; // is pressed?: w a s d
 
-void processInput();
 
 void init(GLFWwindow* window)
 {
 	//temporary light setup - for testing purposes only
-	dirLight.light.direction = lightPos;
+	dirLight.light.direction = dirLightDirecrion;
 	dirLight.light.color = glm::vec3(1.0f,1.0f,1.0f);
 	dirLight.light.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
 	dirLight.light.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
@@ -186,87 +166,83 @@ void init(GLFWwindow* window)
 	pointLight4->light.linear = 0.07f;
 	pointLight4->light.quadratic = 0.017f;
 
-
-
 	pointLights.push_back(*pointLight);
 	pointLights.push_back(*pointLight2);
 	pointLights.push_back(*pointLight3);
 	pointLights.push_back(*pointLight4);
 
-
+	// flips loaded textures vertically
 	stbi_set_flip_vertically_on_load(true);
-
+	
+	// make cursor attached to window
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	// set callbacks
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
 	glfwSetKeyCallback(window, key_callback);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	lightingShader = new Shader("shaders/colorShader.vs", "shaders/colorShader.fs");
+	// create shaders
 	lightCubeShader = new Shader("shaders/lightCubeShader.vs", "shaders/lightCubeShader.fs");
 	modelShader = new Shader("shaders/modelShader.vs", "shaders/modelShader.fs");
 	
+	// create models
 	backpack = new Model("models/backpack/backpack.obj");
 	skull = new Model("models/skull/12140_Skull_v3_L2.obj");
-	airplane_model = new Model("models/airplane/11804_Airplane_v2_l2.obj");
 
-	loadTextures();
 
+	// create camera - camera creation should be moved to AirPlane object for optimization
 	cam = new Camera(false,cameraPos, cameraUp, yaw, pitch);
 	cam->MovementSpeed = cameraSpeed;
 	cam->MouseSensitivity = sensitivity;
 	cam->Zoom = fov;
 
-
+	// to avoid wrong depth rendering
 	glEnable(GL_DEPTH_TEST);
 
 
 
-	//create airPlane object
-	airPlane = new Airplane(airplane_model, cam, cam->Position, AIRPLANE_SPEED, FIRST_PERSON);
-	airPlane->reset(startingPoint);
+	//create airPlane player object
+	airPlane = new Airplane("models/airplane/11804_Airplane_v2_l2.obj", cam, startingPoint, AIRPLANE_SPEED, FIRST_PERSON);
+
+	//non player - to be tested
 	//airPlane = new Airplane(airplane_model, glm::vec3(0.0f, 0.0f, -5.0f), AIRPLANE_SPEED);
 
 
+	// setup light for all models
+	// universal light pointer is set to directional light
+	light = &dirLight;
+	skull->setLightData(light);
+	skull->setLightData(pointLights, *lightCubeShader, false);
+	backpack->setLightData(light);
+	backpack->setLightData(pointLights, *lightCubeShader, false);
+	airPlane->model->setLightData(light);
+	airPlane->model->setLightData(pointLights, *lightCubeShader, false);
+
+
+
 }
 
 
-void loadTextures()
+void drawSkulls(glm::mat4 projection, glm::mat4 view)
 {
-	diffuseMap = loadTexture("container2.png");
-	specularMap = loadTexture("container2spec.png");
-	emmisionMap = loadTexture("matrix.jpg");
-}
 
-
-
-void drawModel(GLFWwindow* window)
-{
-	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// don't forget to enable shader before setting uniforms
+	// start using model shader
 	modelShader->use();
-
-	// view/projection transformations
-	glm::mat4 projection = glm::perspective(glm::radians(cam->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-	glm::mat4 view = cam->GetViewMatrix();
 	modelShader->setMat4("projection", projection);
 	modelShader->setMat4("view", view);
 
-
+	// model matrix
 	glm::mat4 model = glm::mat4(1.0f);
-	light = &dirLight;
+
 
 	// RENDER SKULL MODEL
+	// calculate its model matrix
 	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	model = glm::translate(model, glm::vec3(0.0f, 5.0f, 0.0f)); // translate it down so it's at the center of the scene
 	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
 	modelShader->setMat4("model", model);
-	skull->setLightData(light);
-	lightCubeShader->use();
-	lightCubeShader->setMat4("projection", projection);
-	lightCubeShader->setMat4("view", view);
-	skull->setLightData(pointLights,*lightCubeShader,true);
 	skull->Draw(*modelShader);
 
 	model = glm::mat4(1.0f);
@@ -275,11 +251,6 @@ void drawModel(GLFWwindow* window)
 	model = glm::rotate(model, -glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
 	modelShader->setMat4("model", model);
-	skull->setLightData(light);
-	lightCubeShader->use();
-	lightCubeShader->setMat4("projection", projection);
-	lightCubeShader->setMat4("view", view);
-	skull->setLightData(pointLights, *lightCubeShader, true);
 	skull->Draw(*modelShader);
 
 	model = glm::mat4(1.0f);
@@ -288,11 +259,6 @@ void drawModel(GLFWwindow* window)
 	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
 	modelShader->setMat4("model", model);
-	skull->setLightData(light);
-	lightCubeShader->use();
-	lightCubeShader->setMat4("projection", projection);
-	lightCubeShader->setMat4("view", view);
-	skull->setLightData(pointLights, *lightCubeShader, true);
 	skull->Draw(*modelShader);
 
 	model = glm::mat4(1.0f);
@@ -301,12 +267,38 @@ void drawModel(GLFWwindow* window)
 	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
 	modelShader->setMat4("model", model);
-	skull->setLightData(light);
-	lightCubeShader->use();
-	lightCubeShader->setMat4("projection", projection);
-	lightCubeShader->setMat4("view", view);
-	skull->setLightData(pointLights, *lightCubeShader, true);
 	skull->Draw(*modelShader);
+}
+
+void drawScene(GLFWwindow* window)
+{
+	// clear window
+	glClearColor(0.03f, 0.03f, 0.03f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// view/projection transformations
+	glm::mat4 projection = glm::perspective(glm::radians(cam->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+	glm::mat4 view = cam->GetViewMatrix();
+
+	// draw point lights
+	for (int i = 0; i < pointLights.size(); i++)
+	{
+		lightCubeShader->use();
+		lightCubeShader->setMat4("projection", projection);
+		lightCubeShader->setMat4("view", view);
+		pointLights[i].draw(*lightCubeShader);
+	}
+
+	// start using model shader
+	modelShader->use();
+	modelShader->setMat4("projection", projection);
+	modelShader->setMat4("view", view);
+
+	// model matrix
+	glm::mat4 model = glm::mat4(1.0f);
+
+
+	drawSkulls(projection, view);
 
 
 	// RENDER AIRPLANE MODEL
@@ -315,24 +307,13 @@ void drawModel(GLFWwindow* window)
 	model = glm::mat4(1.0f);
 	
 	model = glm::translate(model, airPlane->transform.Position);
-	
-	
 	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	
 	model = glm::rotate(model, -glm::radians(airPlane->transform.Yaw + 90.0f), glm::vec3(.0f, .0f, 1.0f));
-
 	model = glm::rotate(model, rollRot, glm::vec3(1.0f, 0.0f, 0.0f));
-
 	model = glm::scale(model, glm::vec3(.002f, .002f, .002f));
 	modelShader->setMat4("model", model);
-
-	airPlane->model.setLightData(light);
-	lightCubeShader->use();
-	lightCubeShader->setMat4("projection", projection);
-	lightCubeShader->setMat4("view", view);
-	airPlane->model.setLightData(pointLights, *lightCubeShader, false);
-	airPlane->model.Draw(*modelShader);
+	airPlane->model->Draw(*modelShader);
 
 
 
@@ -345,7 +326,36 @@ void drawModel(GLFWwindow* window)
 int main(void)
 {
 	srand(std::time(NULL));
+	GLFWwindow* window = initOpenGL(); // initialize openGl and create window
+	
+	// set all necesarry settings / create all necessary objects
+	init(window);
 
+	// draw loop
+	while (!glfwWindowShouldClose(window)) 
+	{
+		currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+
+		processInput();
+		drawScene(window);
+
+		glfwPollEvents(); //Wykonaj procedury callback w zalezności od zdarzeń jakie zaszły.
+	}
+
+
+
+	glfwDestroyWindow(window); //Usuń kontekst OpenGL i okno
+	glfwTerminate(); //Zwolnij zasoby zajęte przez GLFW
+	exit(EXIT_SUCCESS);
+}
+
+
+// everything that needs to be done to intialize openGL library
+GLFWwindow* initOpenGL()
+{
 	GLFWwindow* window; //Wskaźnik na obiekt reprezentujący okno
 
 	glfwSetErrorCallback(error_callback);//Zarejestruj procedurę obsługi błędów
@@ -372,28 +382,10 @@ int main(void)
 		exit(EXIT_FAILURE);
 	}
 
-	init(window);
-	//Główna pętla
-	while (!glfwWindowShouldClose(window)) //Tak długo jak okno nie powinno zostać zamknięte
-	{
-		currentFrame = glfwGetTime();
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
-
-		processInput();
-		drawModel(window);
-
-		glfwPollEvents(); //Wykonaj procedury callback w zalezności od zdarzeń jakie zaszły.
-	}
-
-
-
-	glfwDestroyWindow(window); //Usuń kontekst OpenGL i okno
-	glfwTerminate(); //Zwolnij zasoby zajęte przez GLFW
-	exit(EXIT_SUCCESS);
+	return window;
 }
 
-
+// keyboard input callback
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -439,6 +431,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 }
 
+// process keyboard input - useful when something needs to be called when key is PRESSED - in the future this will be integrated with Input class
 void processInput()
 {
 	if (input[0])
@@ -451,6 +444,7 @@ void processInput()
 		airPlane->processMovement(Move_direction::M_RIGHT, deltaTime);
 }
 
+// mouse movement input callback
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 
 	if (firstMouseInput) // initially set to true
@@ -469,6 +463,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 
 }
 
+// mouse scroll input callback
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	cam->ProcessMouseScroll(yoffset);

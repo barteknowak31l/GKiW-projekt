@@ -14,56 +14,74 @@
 #include "Camera.h"
 #include "Transform.h"
 
-
-
-// attached camera positions  
+// attached camera positions
 const glm::vec3 thirdPersonCamOffset = glm::vec3(0.0f, 1.0f, -4.0f);
-const glm::vec3 firstPersonCamOffset = glm::vec3(0.0f, .2f, 0.5f);
+const glm::vec3 firstPersonCamOffset = glm::vec3(0.0f, -.2f, 0.5f);
 
 class Airplane
 {
 public:
 
 	Transform transform;
-	Model model;
+	Model* model;
 	Camera* camera;
-	glm::vec3 cameraOffset;
-	bool isPlayer;
-	bool firstPerson = false;
 
-	//used for animating rotation on Z axis during turn
+
+	// used for animating rotation on Z axis during turn
 	float yawAnimation = 0.0f;
 	
-
-	float yaw = 0.0f;
+	// flying speed
 	float speed;
-	//constructor of airplane without camera
-	Airplane(Model* _model,glm::vec3 pos, float spd);
-
-	//constructor with camera - this one is controlled by player
-	Airplane(Model* _model, Camera* _camera, glm::vec3 pos, float spd,bool fp);
 
 
+	// constructor of airplane without camera
+	Airplane(std::string path,glm::vec3 pos, float spd);
+
+	// constructor with camera - this one is controlled by player
+	Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd,bool fp);
+
+	// movemment handlers
 	void processMovement(Move_direction direction, float deltaTime);
 	void onMovementRelease(Move_direction dir);
 
+	// called each frame
 	void update(float deltaTime);
+	
+	// sets default settings
 	void reset(glm::vec3 offset);
-	void setOffset(glm::vec3 offset);
 
 
 private:
 
+	bool isPlayer;
+	bool firstPerson = false;
+
+	// used for rotating transform when turning around
+	//
+	float yaw = 0.0f;
 	float yawDelta = 60.0f;
 	float yawMax = 360.0f;
 
-	float yawAnimationMax = 30.0f;
+	// used to animate that turning - used in model matrix rotation (currently in main() function)
+	//
+	// maximum angle of rotation when turning (animation only)
+	float yawAnimationMax = 30.0f;		
+	
+	// animation speed
 	float yawAnimationDelta = 25.0f;
-
+	
+ 	// flags to control animation
 	bool decrementYaw = false;
 	bool incrementYaw = false;
 	bool changeYaw = false;
 	bool isRotatePressed = false;
+
+	// current offset (first/third person)
+	glm::vec3 cameraOffset;
+
+	// as name says
+	void handleTurnAnimation(float deltaTime);
+	void handleCamera();
 
 
 };

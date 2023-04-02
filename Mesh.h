@@ -22,10 +22,10 @@
 
 class Model;
 
-
+// NUMBER OF POINT LIGHTS SEMD TO SHADER
 #define MAX_NUM_LIGHTS 4
 
-
+// Stores values for light calculations - read from model file
 struct Material {
     glm::vec3 Diffuse;
     glm::vec3 Specular;
@@ -34,7 +34,8 @@ struct Material {
 };
 
 using namespace std;
-#define MAX_BONE_INFLUENCE 4
+
+// stores vertex data read from model file
 struct Vertex {
     // position
     glm::vec3 Position;
@@ -46,12 +47,9 @@ struct Vertex {
     glm::vec3 Tangent;
     // bitangent
     glm::vec3 Bitangent;
-    //bone indexes which will influence this vertex
-    int m_BoneIDs[MAX_BONE_INFLUENCE];
-    //weights from each bone
-    float m_Weights[MAX_BONE_INFLUENCE];
 };
 
+// stores textures data
 struct Texture {
 	unsigned int id;
 	std::string type;
@@ -68,24 +66,17 @@ public:
     vector<Texture>      textures;
     Material material;
 
-    DirLight directionalLight;
-    vector<PointLight> pointLights;
-    SpotLight spotLight;
-
     unsigned int VAO;
 
     Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, Material material, Model* model);
     void Draw(Shader& shader);
-    void SetLightData(Light_Types type, DirLight light);
-    void SetLightData(Light_Types type, SpotLight light);
-    void SetLightData(Light_Types type, static vector<PointerLight> lights);
+
 
 private:
     //  render data
     unsigned int VBO, EBO;
 
     void setupMesh();
-    void setupLights();
 
     // sends uniform data from Material struct to shader program
     // material data convention (in shader)
@@ -99,6 +90,29 @@ private:
 
     // sends light data stored in structs to shader
     void sendLightsToShader(Shader& shader);
+    // structs in shader:
+    //struct DirLight {
+    //    vec3 direction;
+
+    //    vec3 color;
+    //    vec3 ambient;
+    //    vec3 diffuse;
+    //    vec3 specular;
+    //};
+
+    //struct PointLight {
+    //    vec3 position;
+
+    //    float constant;
+    //    float linear;
+    //    float quadratic;
+
+    //    vec3 color;
+    //    vec3 ambient;
+    //    vec3 diffuse;
+    //    vec3 specular;
+    //};
+
 
 
 };

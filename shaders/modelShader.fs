@@ -98,6 +98,12 @@ vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, sampler2D texDiff, 
     vec3 ambient  = light.color * light.ambient  * vec3(texture(texDiff,TexCoords));
     vec3 diffuse  = light.color * light.diffuse  * diff * vec3(texture(texDiff,TexCoords));
     vec3 specular = light.color * light.specular * spec * vec3(texture(texSpec,TexCoords));
+
+    // not including material info - loaded models have very low values there idk why
+    //ambient*=material.ambient;
+    //diffuse*=material.diffuse;
+    //specular*=material.specular;
+
     return (ambient + diffuse + specular);
 }
 
@@ -122,5 +128,11 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, s
     ambient  *= attenuation;
     diffuse  *= attenuation;
     specular *= attenuation;
+
+    // not including material info - loaded models have very low values there idk why
+    //ambient*=material.ambient;
+    //diffuse*=material.diffuse;
+    //specular*=material.specular;
+
     return (ambient + diffuse + specular);
 } 

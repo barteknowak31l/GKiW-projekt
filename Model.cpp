@@ -23,12 +23,6 @@ void Model::loadModel(string const& path)
     // retrieve the directory path of the filepath
     directory = path.substr(0, path.find_last_of('/'));
 
-    for (int i = 0; i < scene->mNumLights; i++)
-    {
-        std::cout << "LIGHT\n";
-    }
-
-
     // process ASSIMP's root node recursively
     processNode(scene->mRootNode, scene);
 }
@@ -128,7 +122,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
     textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
     // 3. normal maps
     std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());                                               //THESE TWO TYPES MIGHT GET SWAPPED ? ? ? 
+    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());                                               //THESE TWO TYPES SHOULD GET SWAPPED ? ? ? /not used anyway 
     // 4. height maps
     std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
     textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
@@ -140,26 +134,19 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
     material->Get(AI_MATKEY_COLOR_AMBIENT, color);
     mat.Ambient = color;
 
-    //std::cout << "AMBIENT: R: " << color.x << " G: " << color.y << " B: " << color.z << std::endl;
 
     //get diffuse color
     material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
     mat.Diffuse = color;
 
-    //std::cout << "DIFFUSE: R: " << color.x << " G: " << color.y << " B: " << color.z << std::endl;
-
     //get specular color
     material->Get(AI_MATKEY_COLOR_SPECULAR, color);
     mat.Specular = color;
-
-    //std::cout << "SPECULAR: R: " << color.x << " G: " << color.y << " B: " << color.z << std::endl;
 
     //get shininees
     float shininess;
     material->Get(AI_MATKEY_SHININESS, shininess);
     mat.Shininess = shininess;
-
-    //std::cout << "SHININESS: " << shininess<< std::endl;
 
     // return a mesh object created from the extracted mesh data
     return Mesh(vertices, indices, textures, mat,this);
@@ -198,31 +185,7 @@ vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type,
     return textures;
 }
 
-void Model::SetLightData(Light_Types type, DirLight light)
-{
-    if (type != DIRECTIONAL)
-    {
-        std::cout << "Failed to set DIRECTIONAL LIGHT data\n";
-    }
-
-    for (int i = 0; i < meshes.size(); i++) {
-        meshes[i].SetLightData(type, light);
-    }
-}
-
-
-void Model::SetLightData(Light_Types type, SpotLight light)
-{
-    if (type != SPOT)
-    {
-        std::cout << "Failed to set SPOT LIGHT data\n";
-    }
-
-    for (int i = 0; i < meshes.size(); i++) {
-        meshes[i].SetLightData(type, light);
-    }
-}
-
+// set directional/spot light data
 void Model::setLightData(Light* light)
 {
     switch (light->type)
@@ -230,14 +193,19 @@ void Model::setLightData(Light* light)
 
     case DIRECTIONAL:
     {
-        DirectionalLight* dir = dynamic_cast<DirectionalLight*>(light);
-        SetLightData(DIRECTIONAL, dir->light);
+        DirectionalLight* l = dynamic_cast<DirectionalLight*>(light);
+        directionalLight.light.direction = l->light.direction;
+        directionalLight.light.color = l->light.color;
+        directionalLight.light.diffuse = l->light.diffuse;
+        directionalLight.light.ambient = l->light.ambient;
+        directionalLight.light.specular = l->light.specular;
         break;
     }
 
     case SPOT:
     {
-        std::cout << "not implemented yet\n";
+        SpotLight* l = dynamic_cast<SpotLight*>(light);
+        spotLight = *l;
     }
 
     default:
@@ -245,6 +213,8 @@ void Model::setLightData(Light* light)
     }
 }
 
+
+// set point lights
 void Model::setLightData(static vector<PointerLight> lights, Shader& shader, bool draw)
 {
 
@@ -260,6 +230,15 @@ void Model::setLightData(static vector<PointerLight> lights, Shader& shader, boo
     pointLights = _lights;
 }
 
+void Model::setupLights()
+{
+    directionalLight.light.direction = glm::vec3(1.2f, 1.0f, -2.0f);
+    directionalLight.light.color = glm::vec3(1.0f, 1.0f, 1.0f);
+    directionalLight.light.ambient = glm::vec3(0.1f, 0.1f, 0.1f);
+    directionalLight.light.diffuse = glm::vec3(0.1f, 0.1f, 0.1f);
+    directionalLight.light.specular = glm::vec3(0.1f, 0.1f, 0.1f);
+
+}
 
 
 

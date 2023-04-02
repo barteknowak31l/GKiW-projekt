@@ -18,9 +18,6 @@
     <ClCompile Include="main_file.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
     <ClCompile Include="Mesh.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
