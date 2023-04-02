@@ -15,7 +15,7 @@
 #include "Transform.h"
 
 // attached camera positions
-const glm::vec3 thirdPersonCamOffset = glm::vec3(0.0f, 1.0f, -4.0f);
+const glm::vec3 thirdPersonCamOffset = glm::vec3(0.0f, 0.0f, -4.0f);
 const glm::vec3 firstPersonCamOffset = glm::vec3(0.0f, -.2f, 0.5f);
 
 class Airplane
@@ -38,7 +38,7 @@ public:
 	Airplane(std::string path,glm::vec3 pos, float spd);
 
 	// constructor with camera - this one is controlled by player
-	Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd,bool fp);
+	Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd,bool fp, bool _flipPitch);
 
 	// movemment handlers
 	void processMovement(Move_direction direction, float deltaTime);
@@ -61,6 +61,11 @@ private:
 	float yaw = 0.0f;
 	float yawDelta = 60.0f;
 	float yawMax = 360.0f;
+
+
+	// used for rotating when rising and diving
+	float pitch = 0.0f;
+	bool flipPitch;
 
 	// used to animate that turning - used in model matrix rotation (currently in main() function)
 	//

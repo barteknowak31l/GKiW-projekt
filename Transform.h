@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
-
+#include "Line.h"
 
 // This class represents local coordinate system of an object
 
@@ -24,7 +24,9 @@ enum Move_direction {
     M_FORWARD,
     M_BACKWARD,
     M_LEFT,
-    M_RIGHT
+    M_RIGHT,
+    M_RISE,
+    M_DIVE
 };
 
 class Transform
@@ -41,12 +43,14 @@ public:
     
     
     // euler Angles
+    glm::vec3 EulerAngles;
     float Pitch;
     float Yaw;
     float Roll;
 
+
     // constructor with default settings
-    Transform(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH, float roll = _ROLL)
+    Transform(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = _YAW, float pitch = _PITCH, float roll = _ROLL)
     {
         Position = position;
         WorldUp = up;
@@ -54,6 +58,10 @@ public:
         Roll = roll;
         Pitch = pitch;
         
+        EulerAngles.x = Pitch;
+        EulerAngles.y = Yaw;
+        EulerAngles.z = Roll;
+
         updateVectors();
     }
 
@@ -89,6 +97,25 @@ public:
         Pitch = rotation.x;
         Yaw = rotation.y;
         Roll = rotation.z;
+
+        EulerAngles.x = Pitch;
+        EulerAngles.y = Yaw;
+        EulerAngles.z = Roll;
+
+        updateVectors();
+    }
+
+    // set rotation of transform
+    void SetRotation(float pitch, float yaw, float roll)
+    {
+        Pitch = pitch;
+        Yaw = yaw;
+        Roll = roll;
+
+        EulerAngles.x = Pitch;
+        EulerAngles.y = Yaw;
+        EulerAngles.z = Roll;
+
         updateVectors();
     }
 
@@ -98,54 +125,24 @@ public:
         Pitch += rotation.x;
         Yaw += rotation.y;
         Roll += rotation.z;
+
+        EulerAngles.x = Pitch;
+        EulerAngles.y = Yaw;
+        EulerAngles.z = Roll;
+
         updateVectors();
     }
     
 
     // NOT WORKING YET - draw local axes on screen
-    void DrawLines()
+    void DrawLines(glm::mat4 projection, glm::mat4 view, glm::mat4 model )
     {
+        
+        std::cout << "x " << Position.x << " y " << Position.y << " z " << Position.z << std::endl;
+        Line l = Line(Position, Position + Front);
+       // l.setMVP(projection * view * model);
+        l.draw();
 
-        GLfloat front[] =
-        {
-            Position.x, Position.y, Position.z,
-            Position.x+Front.x * 150.0f, Position.y + Front.y * 150.0f, Position.z + Front.z * 150.0f
-        };
-
-        GLfloat right[] =
-        {
-            Position.x, Position.y, Position.z,
-            Position.x + Right.x * 1500.0f, Position.y + Right.y * 1500.0f, Position.z + Right.z * 1500.0f
-        };
-
-        GLfloat up[] =
-        {
-            Position.x, Position.y, Position.z,
-            Position.x + Up.x * 15.0f, Position.y + Up.y * 15.0f, Position.z + Up.z * 15.0f
-        };
-
-
-        glEnable(GL_LINE_SMOOTH);
-
-        glPushAttrib(GL_LINE_BIT);
-        glLineWidth(1000);
-
-        glEnableClientState(GL_VERTEX_ARRAY);
-
-
-        glVertexPointer(3, GL_FLOAT, 0, front);
-        glDrawArrays(GL_LINES, 0, 2);
-
-        glVertexPointer(3, GL_FLOAT, 0, right);
-        glDrawArrays(GL_LINES, 0, 2);
-        glVertexPointer(3, GL_FLOAT, 0, up);
-        glDrawArrays(GL_LINES, 0, 2);
-
-
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glPopAttrib();
-
-        glDisable(GL_LINE_SMOOTH);
     }
 
 private:
@@ -168,6 +165,7 @@ private:
         glm::mat4 roll_mat = glm::rotate(glm::mat4(1.0f), glm::radians(Roll), Front);
         Up =  glm::normalize(glm::mat3(roll_mat) * Up);
         Right = glm::normalize(glm::cross(Front, Up));
+
     }
 
 

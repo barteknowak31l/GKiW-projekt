@@ -1,5 +1,5 @@
 //
-//	STEROWANIE: W A S D - MOVEMENT
+//	STEROWANIE: W A S D / UP DOWN - MOVEMENT
 //				R - RESET
 //				ESC - KONIEC
 //
@@ -32,6 +32,9 @@ const unsigned int SCR_WIDTH = 1920; //800;
 const unsigned int SCR_HEIGHT = 1080; // 600;
 const float AIRPLANE_SPEED = 2.0f;
 const bool FIRST_PERSON = false;
+const bool FLIP_X_AXIS_ROTATION_MOVEMENT = false;
+const float FP_CAM_Y_OFFSET = -0.0f;
+const float AIRPLANE_SACLE = 0.001f;
 const float FOV = 45.0f;
 
 
@@ -112,7 +115,7 @@ Airplane* airPlane;
 glm::vec3 startingPoint = glm::vec3(0.0f, 0.0f, -2.5f);
 
 //temporary input - to do: implement Input class
-bool input[4] = { false, false, false, false }; // is pressed?: w a s d
+bool input[6] = { false, false, false, false, false, false}; // is pressed?: w a s d UP DOWN
 
 
 void init(GLFWwindow* window)
@@ -193,7 +196,7 @@ void init(GLFWwindow* window)
 
 
 	// create camera - camera creation should be moved to AirPlane object for optimization
-	cam = new Camera(false,cameraPos, cameraUp, yaw, pitch);
+	cam = new Camera(false,cameraPos, cameraUp, -90.0f, 0.0f);
 	cam->MovementSpeed = cameraSpeed;
 	cam->MouseSensitivity = sensitivity;
 	cam->Zoom = fov;
@@ -204,10 +207,10 @@ void init(GLFWwindow* window)
 
 
 	//create airPlane player object
-	airPlane = new Airplane("models/airplane/11804_Airplane_v2_l2.obj", cam, startingPoint, AIRPLANE_SPEED, FIRST_PERSON);
+	airPlane = new Airplane("models/airplane/11804_Airplane_v2_l2.obj", cam, startingPoint, AIRPLANE_SPEED, FIRST_PERSON,FLIP_X_AXIS_ROTATION_MOVEMENT);
 
 	//non player - to be tested
-	//airPlane = new Airplane(airplane_model, glm::vec3(0.0f, 0.0f, -5.0f), AIRPLANE_SPEED);
+	//airPlane = new Airplane("models/airplane/11804_Airplane_v2_l2.obj", glm::vec3(0.0f, 0.0f, -5.0f), AIRPLANE_SPEED);
 
 
 	// setup light for all models
@@ -219,7 +222,6 @@ void init(GLFWwindow* window)
 	backpack->setLightData(pointLights, *lightCubeShader, false);
 	airPlane->model->setLightData(light);
 	airPlane->model->setLightData(pointLights, *lightCubeShader, false);
-
 
 
 }
@@ -268,6 +270,74 @@ void drawSkulls(glm::mat4 projection, glm::mat4 view)
 	model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
 	modelShader->setMat4("model", model);
 	skull->Draw(*modelShader);
+
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	model = glm::mat4(1.0f);
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::translate(model, glm::vec3(0.0f, 5.0f, -5.0f)); // translate it down so it's at the center of the scene
+	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
+	modelShader->setMat4("model", model);
+	skull->Draw(*modelShader);
+
+	model = glm::mat4(1.0f);
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::translate(model, glm::vec3(0.0f, -5.0f, -5.0f)); // translate it down so it's at the center of the scene
+	model = glm::rotate(model, -glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
+	modelShader->setMat4("model", model);
+	skull->Draw(*modelShader);
+
+	model = glm::mat4(1.0f);
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::translate(model, glm::vec3(5.0f, 0.0f, -5.0f)); // translate it down so it's at the center of the scene
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
+	modelShader->setMat4("model", model);
+	skull->Draw(*modelShader);
+
+	model = glm::mat4(1.0f);
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::translate(model, glm::vec3(-5.0f, 0.0f, -5.0f)); // translate it down so it's at the center of the scene
+	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
+	modelShader->setMat4("model", model);
+	skull->Draw(*modelShader);
+
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	model = glm::mat4(1.0f);
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::translate(model, glm::vec3(0.0f, 5.0f, 5.0f)); // translate it down so it's at the center of the scene
+	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
+	modelShader->setMat4("model", model);
+	skull->Draw(*modelShader);
+
+	model = glm::mat4(1.0f);
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::translate(model, glm::vec3(0.0f, -5.0f, 5.0f)); // translate it down so it's at the center of the scene
+	model = glm::rotate(model, -glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
+	modelShader->setMat4("model", model);
+	skull->Draw(*modelShader);
+
+	model = glm::mat4(1.0f);
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::translate(model, glm::vec3(5.0f, 0.0f, 5.0f)); // translate it down so it's at the center of the scene
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
+	modelShader->setMat4("model", model);
+	skull->Draw(*modelShader);
+
+	model = glm::mat4(1.0f);
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::translate(model, glm::vec3(-5.0f, 0.0f, 5.0f)); // translate it down so it's at the center of the scene
+	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
+	modelShader->setMat4("model", model);
+	skull->Draw(*modelShader);
+
+
 }
 
 void drawScene(GLFWwindow* window)
@@ -303,19 +373,27 @@ void drawScene(GLFWwindow* window)
 
 	// RENDER AIRPLANE MODEL
 	float rollRot = std::clamp(-glm::radians(YAW + airPlane->yawAnimation + 90.0f), glm::radians(-30.0f), glm::radians(30.0f));
+	float pitchRot = airPlane->transform.Pitch;
+
 	airPlane->update(deltaTime);
 	model = glm::mat4(1.0f);
 	
 	model = glm::translate(model, airPlane->transform.Position);
+	model = glm::translate(model, glm::vec3(0.0f,FP_CAM_Y_OFFSET,0.0f));
 	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+
 	model = glm::rotate(model, -glm::radians(airPlane->transform.Yaw + 90.0f), glm::vec3(.0f, .0f, 1.0f));
+	model = glm::rotate(model, glm::radians(pitchRot), glm::vec3(.0f, 1.0f, 0.0f));
+	
 	model = glm::rotate(model, rollRot, glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::scale(model, glm::vec3(.002f, .002f, .002f));
+	model = glm::scale(model, glm::vec3(AIRPLANE_SACLE, AIRPLANE_SACLE, AIRPLANE_SACLE));
 	modelShader->setMat4("model", model);
 	airPlane->model->Draw(*modelShader);
 
-
+	// debug
+	//airPlane->transform.DrawLines(projection, view, model);
 
 	// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 	// -------------------------------------------------------------------------------
@@ -416,6 +494,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		input[2] = true;
 	if (key == GLFW_KEY_D && action == GLFW_PRESS)
 		input[3] = true;
+	if (key == GLFW_KEY_UP && action == GLFW_PRESS)
+		input[4] = true;
+	if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
+		input[5] = true;
+
 
 	if (key == GLFW_KEY_W && action == GLFW_RELEASE)
 		input[0] = false;
@@ -425,9 +508,14 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		input[2] = false;
 	if (key == GLFW_KEY_D && action == GLFW_RELEASE)
 		input[3] = false;
+	if (key == GLFW_KEY_UP && action == GLFW_RELEASE)
+		input[4] = false;
+	if (key == GLFW_KEY_DOWN && action == GLFW_RELEASE)
+		input[5] = false;
 
 
-
+	if (key == GLFW_KEY_Y && action == GLFW_PRESS)
+		airPlane->camera->flipY = !airPlane->camera->flipY;
 
 }
 
@@ -442,6 +530,10 @@ void processInput()
 		airPlane->processMovement(Move_direction::M_LEFT, deltaTime);
 	if (input[3])
 		airPlane->processMovement(Move_direction::M_RIGHT, deltaTime);
+	if (input[4])
+		airPlane->processMovement(Move_direction::M_RISE, deltaTime);
+	if (input[5])
+		airPlane->processMovement(Move_direction::M_DIVE, deltaTime);
 }
 
 // mouse movement input callback
