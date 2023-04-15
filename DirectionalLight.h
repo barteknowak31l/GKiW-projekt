@@ -11,7 +11,13 @@ public:
 
     // just for compilator to not throw billion errors
     DirectionalLight() {
-        ;
+        type = DIRECTIONAL;
+
+        light.direction = glm::vec3(0);
+        light.color = glm::vec3(0);
+        light.ambient = glm::vec3(0);
+        light.diffuse = glm::vec3(0);
+        light.specular = glm::vec3(0);
     }
 
     // actual constructor

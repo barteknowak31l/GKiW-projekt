@@ -2,6 +2,7 @@
 
 PointerLight::PointerLight()
 {
+    type = POINT;
     setup();
 }
 PointerLight::PointerLight(glm::vec3 position, glm::vec3 color, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float constant, float linear, float quadratic) {
@@ -50,7 +51,8 @@ void PointerLight::PointerLight::draw(Shader& shader)
     glm::mat4 model;
     model = glm::mat4(1.0f);
     model = glm::translate(model, light.position);
-    model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
+    model = glm::scale(model, glm::vec3(2.0f)); 
+
     shader.setMat4("model", model);
     shader.setVec3("color", light.color);
     glDrawArrays(GL_TRIANGLES, 0, 36);

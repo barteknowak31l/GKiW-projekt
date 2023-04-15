@@ -220,6 +220,12 @@ void Model::setLightData(Light* light)
         directionalLight.light.specular = l->light.specular;
         break;
     }
+    case POINT:
+    {
+        PointerLight *l = dynamic_cast<PointerLight*>(light);
+        pointLights.push_back(l->light);
+        break;
+    }
     default:
         break;
     }

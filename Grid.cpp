@@ -326,6 +326,5 @@ float Grid::GetMaxHeight()
 				max = GetGridPoint(x, z);
 		}
 	}
-	std::cout << "max " << max << std::endl;
 	return max;
 }

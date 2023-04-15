@@ -22,7 +22,7 @@ using namespace std;
 class Model;
 
 // MAX NUMBER OF POINT LIGHTS SEND TO SHADER
-#define MAX_NUM_LIGHTS 4
+#define MAX_NUM_LIGHTS 10
 
 // Stores values for light calculations - read from model file
 struct Material {

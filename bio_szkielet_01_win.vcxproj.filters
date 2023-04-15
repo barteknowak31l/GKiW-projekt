@@ -30,9 +30,6 @@
     <ClCompile Include="Airplane.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
-    <ClCompile Include="Line.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
     <ClCompile Include="TerrainGenerator.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
@@ -40,6 +37,9 @@
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
     <ClCompile Include="GameObject.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="Skull.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
   </ItemGroup>
@@ -74,9 +74,6 @@
     <ClInclude Include="Transform.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
-    <ClInclude Include="Line.h">
-      <Filter>Pliki nagłówkowe</Filter>
-    </ClInclude>
     <ClInclude Include="TerrainGenerator.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
@@ -86,14 +83,11 @@
     <ClInclude Include="GameObject.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+    <ClInclude Include="Skull.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\colorShader.fs">
-      <Filter>Pliki zasobów</Filter>
-    </None>
-    <None Include="shaders\colorShader.vs">
-      <Filter>Pliki zasobów</Filter>
-    </None>
     <None Include="shaders\lightCubeShader.fs">
       <Filter>Pliki zasobów</Filter>
     </None>

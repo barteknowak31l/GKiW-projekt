@@ -2,10 +2,9 @@
 #include <cmath>
 #include <algorithm>
 
-Airplane::Airplane(std::string path,glm::vec3 pos, float spd) :GameObject(path, pos)
+Airplane::Airplane(std::string path,glm::vec3 pos, float spd, glm::vec3 scale) :GameObject(path, pos)
 {
-	//model = new Model(path);
-	transform.Position = pos;
+	transform.setScale(scale);
 	speed = spd;
 	isPlayer = false;
 	yaw = 0.0f;
@@ -14,8 +13,9 @@ Airplane::Airplane(std::string path,glm::vec3 pos, float spd) :GameObject(path, 
 	reset();
 }
 
-Airplane::Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd, bool fp, bool _flipPitch):GameObject(path,pos)
+Airplane::Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd, bool fp, bool _flipPitch, glm::vec3 scale):GameObject(path,pos)
 {
+	transform.setScale(scale);
 	camera = _camera;
 	speed = spd;
 	firstPerson = fp;
@@ -51,9 +51,6 @@ void Airplane::processMovement(Move_direction direction, float deltaTime)
 		movement += transform.Front * velocity;
 	if (direction == M_BACKWARD)
 		movement -= transform.Front * velocity;
-
-
-
 
 
 	transform.Move(movement);
@@ -112,9 +109,6 @@ void Airplane::processMovement(Move_direction direction, float deltaTime)
 	}
 	else
 		transform.SetRotation(glm::vec3(PITCH + pitch, YAW + yaw, ROLL));
-
-
-
 
 }
 
@@ -259,7 +253,7 @@ void Airplane::reset()
 	}
 }
 
-glm::mat4 Airplane::calcModelMatrix(glm::mat4 model, float scale)
+glm::mat4 Airplane::calcModelMatrix(glm::mat4 model)
 {
 	float rollRot = std::clamp(-glm::radians(YAW + yawAnimation + 90.0f), glm::radians(-30.0f), glm::radians(30.0f));
 	float pitchRot = transform.Pitch;
@@ -276,7 +270,7 @@ glm::mat4 Airplane::calcModelMatrix(glm::mat4 model, float scale)
 	model = glm::rotate(model, glm::radians(pitchRot), glm::vec3(.0f, 1.0f, 0.0f));
 
 	model = glm::rotate(model, rollRot, glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::scale(model, glm::vec3(scale, scale, scale));
+	model = glm::scale(model, glm::vec3(transform.scale.x, transform.scale.y, transform.scale.z));
 
 	return model;
 }

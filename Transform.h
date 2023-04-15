@@ -49,6 +49,12 @@ public:
     float Roll;
 
 
+    // scale
+    glm::vec3 scale;
+    float scaleX;
+    float scaleY;
+    float scaleZ;
+
     // constructor with default settings
     Transform(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = _YAW, float pitch = _PITCH, float roll = _ROLL)
     {
@@ -133,6 +139,26 @@ public:
         updateVectors();
     }
     
+
+    void setScale(float x, float y, float z)
+    {
+        scaleX = x;
+        scaleY = y;
+        scaleZ = z;
+        scale = glm::vec3(x,y,z);
+    }
+
+    void setScale(glm::vec3 s)
+    {
+        scale.x = s.x;
+        scale.y = s.y;
+        scale.z = s.z;
+        scaleX = s.x;
+        scaleY = s.y;
+        scaleZ = s.z;
+    }
+
+
 private:
 
     // calculate local axes with current Euler angles

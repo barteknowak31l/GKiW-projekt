@@ -1,7 +1,7 @@
 //
-//	STEROWANIE: W A S D / UP DOWN - MOVEMENT
+//	STEROWANIE: W, A, S, D, UP, DOWN - RUCH
 //				R - RESET
-//				ESC - KONIEC
+//				ESC - EXIT
 //
 
 #define GLM_FORCE_RADIANS
@@ -20,6 +20,7 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Airplane.h"
+#include "Skull.h"
 #include "Grid.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -27,8 +28,8 @@
 
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 const float AIRPLANE_SPEED = 20.0f;
 const bool FIRST_PERSON = false;	// FIRST PERSON AKTUALNIE NIE DZIALA
 const bool FREE_CAM = false;
@@ -39,7 +40,7 @@ const float FOV = 45.0f;
 const bool ENABLE_ANISOTROPY = true;
 
 
-// CAMERA
+// camera
 Camera* cam;
 
 
@@ -51,34 +52,21 @@ float lastFrame = 0.0f; // Time of last frame
 
 // terrain generator
 Grid* grid;
-glm::vec3 LIGHT_DIR = glm::vec3(1.0f, 1.0f, .0f);	// directional light for terrain
 
 
 // lighting
 Light* light;	//universal light pointer
 DirectionalLight dirLight;
-glm::vec3 dirLightDirecrion(0.2f, -1.0f, -0.3f);
+glm::vec3 dirLightDirecrion(0.2f, -1.0f, -0.3f);	// with implementation of day night cycle direction should not be static
 vector<PointerLight> pointLights;
 
-PointerLight* pointLight;
-PointerLight* pointLight2;
-PointerLight* pointLight3;
-PointerLight* pointLight4;
-
-glm::vec3 pointLightPos[] = 
-{	glm::vec3(0.0f, 1.0f, -5.0f), 
-	glm::vec3(0.0f, 1.0f, 5.0f),
-	glm::vec3(5.0f, 1.0f, 0.0f),
-	glm::vec3(-5.0f, 1.0f, 0.0f)};
-
 // shaders
-Shader* lightCubeShader;
+Shader* lightCubeShader; // shader for drawing point light position
 Shader* modelShader;
 Shader* terrainShader;
 
 
 // Models
-Model* backpack;
 Model* skull;
 Model* airplane_model;
 
@@ -86,6 +74,8 @@ Model* airplane_model;
 // objects
 Airplane* airPlane;
 glm::vec3 startingPoint = glm::vec3(0.0f, 0.0f, -2.5f);
+const int numOfSkulls = 10;
+Skull* skulls[numOfSkulls];
 
 // input
 bool input[6] = { false, false, false, false, false, false}; // is pressed?: w a s d UP DOWN
@@ -106,13 +96,18 @@ GLFWwindow* initOpenGL();
 void drawSkulls(glm::mat4 projection, glm::mat4 view, Shader *shader);
 void drawTerrain(glm::mat4 projection, glm::mat4 view, Shader* shader);
 void drawAirplane(glm::mat4 projection, glm::mat4 view, Shader* shader);
-void drawPointLights(glm::mat4 projection, glm::mat4 view, Shader* shader);
 void initLights();
 void initCamera();
 void initShaders();
 void initModels();
 void initTerrain();
+void initSkulls();
 void update(float deltaTime);
+void debugMessage(std::string msg);
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Procedura obsługi błędów
 void error_callback(int error, const char* description) {
@@ -125,15 +120,19 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
-// initialization
+// INITIALIZATION
 void init(GLFWwindow* window)
 {
+
+	debugMessage("starting general initialization");
+
 	// flips loaded textures vertically
 	stbi_set_flip_vertically_on_load(true);
 	
 
 	if (ENABLE_ANISOTROPY)
 	{
+		debugMessage("Anisotropy enabled");
 		float maxAnisotropy;
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy);
 		glTexParameterf(GL_TEXTURE_2D,
@@ -152,32 +151,53 @@ void init(GLFWwindow* window)
 
 	// init everything else
 
+	debugMessage("initializing shaders");
 	initShaders();
-	
+	debugMessage("shaders initialized");
+
+	debugMessage("initializing models");
 	initModels();
+	debugMessage("models initialized");
 
-	initCamera();
-
+	debugMessage("initializing terrain");
 	initTerrain();
+	debugMessage("terrain initialized");
+
+	debugMessage("initializing skulls");
+	initSkulls();
+	debugMessage("skulls initialized");
+	
+	debugMessage("initializing camera");
+	initCamera();
+	debugMessage("camera initialized");
+
+
+
 
 	// create airPlane player object
-	airPlane = new Airplane("models/airplane/11804_Airplane_v2_l2.obj", cam, startingPoint, AIRPLANE_SPEED, FIRST_PERSON,FLIP_X_AXIS_ROTATION_MOVEMENT);
+	debugMessage("creating Airplane object");
+	airPlane = new Airplane("models/airplane/11804_Airplane_v2_l2.obj", cam, startingPoint, AIRPLANE_SPEED, FIRST_PERSON,FLIP_X_AXIS_ROTATION_MOVEMENT, glm::vec3(AIRPLANE_SCALE, AIRPLANE_SCALE, AIRPLANE_SCALE));
 	airPlane->resetPosition = startingPoint;
-
+	debugMessage("Airplane created");
 	//non player - to be tested
-	//airPlane = new Airplane("models/airplane/11804_Airplane_v2_l2.obj", glm::vec3(0.0f, 0.0f, -5.0f), AIRPLANE_SPEED);
+	//airPlane = new Airplane("models/airplane/11804_Airplane_v2_l2.obj", glm::vec3(0.0f, 0.0f, -5.0f), AIRPLANE_SPEED, glm::vec3(AIRPLANE_SCALE, AIRPLANE_SCALE, AIRPLANE_SCALE));
 
 
 	// setup light for all models
+	debugMessage("initializing lights");
 	initLights();
+	debugMessage("lights initialized");
 
 
 
 	// to avoid wrong depth rendering
 	glEnable(GL_DEPTH_TEST);
 
-}
+	debugMessage("general initialziation succeded");
+	debugMessage("program ready");
 
+
+}
 void initCamera()
 {
 	// default camera settings
@@ -195,7 +215,6 @@ void initCamera()
 	cam->MouseSensitivity = sensitivity;
 	cam->Zoom = fov;
 }
-
 void initShaders()
 {
 	// create shaders
@@ -203,14 +222,80 @@ void initShaders()
 	modelShader = new Shader("shaders/modelShader.vs", "shaders/modelShader.fs");
 	terrainShader = new Shader("Shaders/terrain.vs", "Shaders/terrain.fs");
 }
-
 void initModels()
 {
 	// create models
-	backpack = new Model("models/backpack/backpack.obj");
 	skull = new Model("models/skull/12140_Skull_v3_L2.obj");
 }
+void initSkulls()
+{
 
+	float lightOffset = 30.0f;
+
+	// initialize skulls with random position and scale
+
+	float minXZ = -grid->Width * grid->WorldScale;
+	float maxXZ = grid->Width * grid->WorldScale;
+
+	float minY = startingPoint.y;
+	float maxY = minY + 10.0f;
+
+	float minScale = 1.0f;
+	float maxScale = 1.0f;
+
+	float minRGB = 0.5f;
+	float maxRGB = 1.0f;
+
+	float x = 0;
+	float y = 0;
+	float z = 0;
+	float s = 0;
+
+	// random light colors
+	float R = 0;
+	float G = 0; 
+	float B = 0;
+
+
+
+	glm::vec3 pos = glm::vec3(0,0,0);
+	glm::vec3 scale = glm::vec3(0,0,0);
+	glm::vec3 rotation = glm::vec3(0,0,0);
+
+	for (int i = 0; i < numOfSkulls; i++)
+	{
+		
+		x = minXZ + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxXZ - minXZ)));
+		y = minY + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxY - minY)));
+		z = minXZ + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxXZ - minXZ)));
+		s = minScale + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxScale - minScale)));
+
+		R = minRGB + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxRGB - minRGB)));
+		G = minRGB + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxRGB - minRGB)));
+		B = minRGB + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxRGB - minRGB)));
+
+
+		pos = glm::vec3(x, y, z);
+		scale = glm::vec3(s, s, s);
+
+		skulls[i] = new Skull("models/skull/12140_Skull_v3_L2.obj", pos, lightCubeShader);
+
+
+		skulls[i]->light.light.position = pos +glm::vec3(lightOffset,lightOffset,0.0f);
+		skulls[i]->light.light.color = glm::vec3(R, G, B);
+		skulls[i]->light.light.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
+		skulls[i]->light.light.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
+		skulls[i]->light.light.specular = glm::vec3(1.0f, 1.0f, 1.0f);
+		skulls[i]->light.light.constant = 1.0f;
+		skulls[i]->light.light.linear = 0.014f;
+		skulls[i]->light.light.quadratic = 0.0007f;
+
+
+		skulls[i]->transform.setScale(scale);
+
+		
+	}
+}
 void initTerrain()
 {
 	// create terrain
@@ -228,7 +313,6 @@ void initTerrain()
 		"textures/snow_02_diff_1k_2.jpg",
 		TEXTURE_HEIGHT_LEVELS, *grid);
 }
-
 void initLights()
 {
 	//temporary light setup
@@ -238,68 +322,30 @@ void initLights()
 	dirLight.light.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
 	dirLight.light.specular = glm::vec3(1.0f, 1.0f, 1.0f);
 
-
-	pointLight = new PointerLight();
-	pointLight2 = new PointerLight();
-	pointLight3 = new PointerLight();
-	pointLight4 = new PointerLight();
-
-	pointLight->light.position = pointLightPos[0];
-	pointLight->light.color = glm::vec3(171.0f / 255.0f, 11.0f / 255.0f, 0.0f / 255.0f);
-	pointLight->light.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
-	pointLight->light.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
-	pointLight->light.specular = glm::vec3(1.0f, 1.0f, 1.0f);
-	pointLight->light.constant = 1.0f;
-	pointLight->light.linear = 0.07f;
-	pointLight->light.quadratic = 0.017f;
-
-	pointLight2->light.position = pointLightPos[1];
-	pointLight2->light.color = glm::vec3(0.0f, 0.0f, 1.0f);
-	pointLight2->light.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
-	pointLight2->light.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
-	pointLight2->light.specular = glm::vec3(1.0f, 1.0f, 1.0f);
-	pointLight2->light.constant = 1.0f;
-	pointLight2->light.linear = 0.07f;
-	pointLight2->light.quadratic = 0.017f;
-
-	pointLight3->light.position = pointLightPos[2];
-	pointLight3->light.color = glm::vec3(1.0f, 1.0f, 0.0f);
-	pointLight3->light.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
-	pointLight3->light.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
-	pointLight3->light.specular = glm::vec3(1.0f, 1.0f, 1.0f);
-	pointLight3->light.constant = 1.0f;
-	pointLight3->light.linear = 0.07f;
-	pointLight3->light.quadratic = 0.017f;
-
-	pointLight4->light.position = pointLightPos[3];
-	pointLight4->light.color = glm::vec3(0.0f, 1.0f, 0.0f);
-	pointLight4->light.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
-	pointLight4->light.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
-	pointLight4->light.specular = glm::vec3(1.0f, 1.0f, 1.0f);
-	pointLight4->light.constant = 1.0f;
-	pointLight4->light.linear = 0.07f;
-	pointLight4->light.quadratic = 0.017f;
-
-	pointLights.push_back(*pointLight);
-	pointLights.push_back(*pointLight2);
-	pointLights.push_back(*pointLight3);
-	pointLights.push_back(*pointLight4);
-
-
-
 	light = &dirLight;		// universal light pointer is set to directional light
 
-	skull->setLightData(light);
-	skull->setLightData(pointLights, *lightCubeShader);
-	backpack->setLightData(light);
-	backpack->setLightData(pointLights, *lightCubeShader);
+	// light for skulls
+	for (int i = 0; i < numOfSkulls; i++)
+	{
+
+		PointerLight* p = &skulls[i]->light;
+		light = p;
+		skulls[i]->model->setLightData(light);
+
+		pointLights.push_back(*p);
+
+		light = &dirLight;
+		skulls[i]->model->setLightData(light);
+	}
+
+	light = &dirLight;
 	airPlane->model->setLightData(light);
 	airPlane->model->setLightData(pointLights, *lightCubeShader);
 
 }
 
 
-// drawing
+// DRAWING
 void drawTerrain(glm::mat4 projection, glm::mat4 view, Shader* shader)
 {
 	glm::mat4 model = glm::mat4(1.0f);
@@ -319,7 +365,6 @@ void drawTerrain(glm::mat4 projection, glm::mat4 view, Shader* shader)
 
 	grid->Draw(*shader);
 }
-
 void drawSkulls(glm::mat4 projection, glm::mat4 view, Shader* shader)
 {
 	// model matrix
@@ -332,127 +377,38 @@ void drawSkulls(glm::mat4 projection, glm::mat4 view, Shader* shader)
 	shader->setMat4("view", view);
 
 
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(0.0f, 5.0f, 0.0f)); // translate it down so it's at the center of the scene
-	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
-	shader->setMat4("model", model);
-	skull->Draw(*shader);
+	for (int i = 0; i < numOfSkulls; i++)
+	{
 
-	model = glm::mat4(1.0f);
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(0.0f, -5.0f, 0.0f)); // translate it down so it's at the center of the scene
-	model = glm::rotate(model, -glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
-	shader->setMat4("model", model);
-	skull->Draw(*shader);
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, skulls[i]->transform.Position); // translate it down so it's at the center of the scene
+		model = glm::rotate(model,skulls[i]->transform.Pitch,glm::vec3(1.0f,0.0f,0.0f));
+		model = glm::rotate(model,skulls[i]->transform.Yaw,glm::vec3(0.0f,1.0f,0.0f));
+		model = glm::rotate(model,skulls[i]->transform.Roll,glm::vec3(0.0f,0.0f,1.0f));
+		model = glm::scale(model, skulls[i]->transform.scale);	// it's a bit too big for our scene, so scale it down
+		model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		shader->use();
+		shader->setMat4("model", model);
+		skulls[i]->model->Draw(*shader);
 
-	model = glm::mat4(1.0f);
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(5.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
-	shader->setMat4("model", model);
-	skull->Draw(*shader);
+		skulls[i]->drawLight(projection, view);
 
-	model = glm::mat4(1.0f);
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(-5.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
-	shader->setMat4("model", model);
-	skull->Draw(*shader);
-
-
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	model = glm::mat4(1.0f);
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(0.0f, 5.0f, -5.0f)); // translate it down so it's at the center of the scene
-	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
-	shader->setMat4("model", model);
-	skull->Draw(*shader);
-
-	model = glm::mat4(1.0f);
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(0.0f, -5.0f, -5.0f)); // translate it down so it's at the center of the scene
-	model = glm::rotate(model, -glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
-	shader->setMat4("model", model);
-	skull->Draw(*shader);
-
-	model = glm::mat4(1.0f);
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(5.0f, 0.0f, -5.0f)); // translate it down so it's at the center of the scene
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
-	shader->setMat4("model", model);
-	skull->Draw(*shader);
-
-	model = glm::mat4(1.0f);
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(-5.0f, 0.0f, -5.0f)); // translate it down so it's at the center of the scene
-	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
-	shader->setMat4("model", model);
-	skull->Draw(*shader);
-
-
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	model = glm::mat4(1.0f);
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(0.0f, 5.0f, 5.0f)); // translate it down so it's at the center of the scene
-	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
-	shader->setMat4("model", model);
-	skull->Draw(*shader);
-
-	model = glm::mat4(1.0f);
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(0.0f, -5.0f, 5.0f)); // translate it down so it's at the center of the scene
-	model = glm::rotate(model, -glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
-	shader->setMat4("model", model);
-	skull->Draw(*shader);
-
-	model = glm::mat4(1.0f);
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(5.0f, 0.0f, 5.0f)); // translate it down so it's at the center of the scene
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	model = glm::scale(model, glm::vec3(.02f, .02f, .02f));	// it's a bit too big for our scene, so scale it down
-	shader->setMat4("model", model);
-	skull->Draw(*shader);
-
-	model = glm::mat4(1.0f);
-	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::translate(model, glm::vec3(-5.0f, 0.0f, 5.0f)); // translate it down so it's at the center of the scene
-	model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	model = glm::scale(model, glm::vec3(.2f, .2f, .2f));	// it's a bit too big for our scene, so scale it down
-	shader->setMat4("model", model);
-	skull->Draw(*shader);
+	}
 
 
 }
-
 void drawAirplane(glm::mat4 projection, glm::mat4 view, Shader* shader)
 {
 
 	// RENDER AIRPLANE MODEL
 	glm::mat4 model = glm::mat4(1.0f);
-	model = airPlane->calcModelMatrix(model, AIRPLANE_SCALE);
+	model = airPlane->calcModelMatrix(model);
+	shader->use();
 	shader->setMat4("model", model);
 	airPlane->model->Draw(*shader);
 }
 
-void drawPointLights(glm::mat4 projection, glm::mat4 view, Shader* shader)
-{
-	// draw point lights
-	lightCubeShader->use();
-	lightCubeShader->setMat4("projection", projection);
-	lightCubeShader->setMat4("view", view);
-	for (int i = 0; i < pointLights.size(); i++)
-	{
-		pointLights[i].draw(*lightCubeShader);
-	}
-}
-
+// MAIN DRAW FUNCTION
 void drawScene(GLFWwindow* window)
 {
 	// clear window
@@ -467,9 +423,6 @@ void drawScene(GLFWwindow* window)
 	// draw terrain
 	drawTerrain(projection, view, terrainShader);
 
-	// draw point lights
-	drawPointLights(projection, view, lightCubeShader);
-
 	// start using model shader
 	modelShader->use();
 	modelShader->setMat4("projection", projection);
@@ -481,10 +434,20 @@ void drawScene(GLFWwindow* window)
 	glfwSwapBuffers(window);
 }
 
+// this is only temporary solution: GameObject class will handle all updates
 void update(float deltaTime)
 {
 	airPlane->update(deltaTime);
+
+
+	for (int i = 0; i < numOfSkulls; i++)
+	{
+		skulls[i]->update(deltaTime);
+	}
+
 }
+
+
 
 int main(void)
 {
@@ -517,9 +480,13 @@ int main(void)
 }
 
 
+
 // everything that needs to be done to intialize openGL library // create window
 GLFWwindow* initOpenGL()
 {
+	debugMessage("InitializingOpenGL");
+
+
 	GLFWwindow* window; //Wskaźnik na obiekt reprezentujący okno
 
 	glfwSetErrorCallback(error_callback);//Zarejestruj procedurę obsługi błędów
@@ -546,9 +513,14 @@ GLFWwindow* initOpenGL()
 		exit(EXIT_FAILURE);
 	}
 
+	debugMessage("OpenGl initialized, window [SIZE " + std::to_string(SCR_HEIGHT) + "x" + std::to_string(SCR_WIDTH) + "] created");
+
 	return window;
 }
 
+
+//INPUT
+// 
 // keyboard input callback
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -655,6 +627,8 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	cam->ProcessMouseScroll(yoffset);
 }
 
+
+
 // utility function for loading a 2D texture from file
 // path - path to texture file
 // repeat: should be one of GL_REPEAT, GL_MIRRORED_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER
@@ -696,4 +670,9 @@ unsigned int loadTexture(char const* path, int repeat)
 	}
 
 	return textureID;
+}
+
+void debugMessage(std::string msg)
+{
+	std::cout << " --" << msg << "\n";
 }

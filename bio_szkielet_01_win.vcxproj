@@ -22,11 +22,11 @@
     <ClCompile Include="Airplane.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Grid.cpp" />
-    <ClCompile Include="Line.cpp" />
     <ClCompile Include="main_file.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="PointerLight.cpp" />
+    <ClCompile Include="Skull.cpp" />
     <ClCompile Include="TerrainGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -36,18 +36,16 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="Light.h" />
-    <ClInclude Include="Line.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="PointerLight.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Skull.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="TerrainGenerator.h" />
     <ClInclude Include="Transform.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\colorShader.fs" />
-    <None Include="shaders\colorShader.vs" />
     <None Include="shaders\lightCubeShader.fs" />
     <None Include="shaders\lightCubeShader.vs" />
     <None Include="shaders\modelShader.fs" />

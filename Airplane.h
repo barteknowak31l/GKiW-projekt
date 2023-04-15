@@ -28,10 +28,10 @@ public:
 	glm::vec3 resetPosition;
 
 	// constructor of airplane without camera
-	Airplane(std::string path,glm::vec3 pos, float spd);
+	Airplane(std::string path,glm::vec3 pos, float spd, glm::vec3 scale);
 
 	// constructor with camera - this one is controlled by player
-	Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd, bool fp, bool _flipPitch);
+	Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd, bool fp, bool _flipPitch, glm::vec3 scale);
 
 	// movemment handlers
 	void processMovement(Move_direction direction, float deltaTime);
@@ -43,7 +43,7 @@ public:
 	// sets default settings
 	void reset();
 
-	glm::mat4 calcModelMatrix(glm::mat4 matrix, float scale);
+	glm::mat4 calcModelMatrix(glm::mat4 matrix);
 
 
 private:
