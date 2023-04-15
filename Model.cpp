@@ -165,6 +165,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
     material->Get(AI_MATKEY_SHININESS, shininess);
     mat.Shininess = shininess;
 
+
     // return a mesh object created from the extracted mesh data
     return Mesh(vertices, indices, textures, mat,this);
 }

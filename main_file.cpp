@@ -36,6 +36,7 @@ const bool FLIP_X_AXIS_ROTATION_MOVEMENT = false;
 const float FP_CAM_Y_OFFSET = -0.0f;
 const float AIRPLANE_SCALE = 0.001f;
 const float FOV = 45.0f;
+const bool ENABLE_ANISOTROPY = true;
 
 
 // CAMERA
@@ -98,7 +99,7 @@ bool firstMouseInput = true;
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-unsigned int loadTexture(char const* path);
+unsigned int loadTexture(char const* path, int repeat);
 void loadTextures();
 void processInput();
 GLFWwindow* initOpenGL();
@@ -130,6 +131,15 @@ void init(GLFWwindow* window)
 	// flips loaded textures vertically
 	stbi_set_flip_vertically_on_load(true);
 	
+
+	if (ENABLE_ANISOTROPY)
+	{
+		float maxAnisotropy;
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy);
+		glTexParameterf(GL_TEXTURE_2D,
+			GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+	}
+
 	// make cursor attached to window
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -562,7 +572,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		airPlane->onMovementRelease(Move_direction::M_RIGHT);
 	}
 
-
 	// SET / CLEAR INPUT BOOLEANS
 	if (key == GLFW_KEY_W && action == GLFW_PRESS)
 		input[0] = true;
@@ -647,8 +656,10 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 // utility function for loading a 2D texture from file
+// path - path to texture file
+// repeat: should be one of GL_REPEAT, GL_MIRRORED_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER
 // ---------------------------------------------------
-unsigned int loadTexture(char const* path)
+unsigned int loadTexture(char const* path, int repeat)
 {
 	unsigned int textureID;
 	glGenTextures(1, &textureID);
@@ -669,10 +680,10 @@ unsigned int loadTexture(char const* path)
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);							// przetestowac mirrored repeat na teksturze terenu
-		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);							// przetestowac mirrored repeat na teksturze terenu
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, repeat);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, repeat);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 

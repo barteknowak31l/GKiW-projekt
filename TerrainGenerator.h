@@ -5,7 +5,7 @@
 class Grid;
 
 // wczytywanie tekstur z pliku - zdefiniowane w main 
-extern unsigned int loadTexture(char const* path);
+extern unsigned int loadTexture(char const* path, int repeat);
 
 class TerrainGenerator
 {

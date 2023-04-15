@@ -118,10 +118,10 @@ void TerrainGenerator::LoadTextures(const char* path0, const char* path1, const 
 	HeightLevels.resize(levels.size());
 	std::copy(levels.begin(), levels.end(), HeightLevels.begin());
 
-	terrainTextureLv0 = loadTexture(path0);
-	terrainTextureLv1 = loadTexture(path1);
-	terrainTextureLv2 = loadTexture(path2);
-	terrainTextureLv3 = loadTexture(path3);
+	terrainTextureLv0 = loadTexture(path0, GL_MIRRORED_REPEAT);
+	terrainTextureLv1 = loadTexture(path1, GL_MIRRORED_REPEAT);
+	terrainTextureLv2 = loadTexture(path2, GL_MIRRORED_REPEAT);
+	terrainTextureLv3 = loadTexture(path3, GL_MIRRORED_REPEAT);
 
 	CalculateTextureHeightLevels(grid.GetMinHeight(),grid.GetMaxHeight(), HeightLevels);
 }
