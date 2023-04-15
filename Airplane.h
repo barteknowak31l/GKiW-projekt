@@ -8,32 +8,30 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
-#include "Model.h"
+#include "GameObject.h"
 #include "Camera.h"
-#include "Transform.h"
+
 
 // attached camera positions
 const glm::vec3 thirdPersonCamOffset = glm::vec3(0.0f, 0.0f, -4.0f);
 const glm::vec3 firstPersonCamOffset = glm::vec3(0.0f, -.2f, 0.5f);
 
-class Airplane
+class Airplane : public GameObject
 {
 public:
 
-	Transform transform;
-	Model* model;
 	Camera* camera;
-
 
 	// used for animating rotation on Z axis during turn
 	float yawAnimation = 0.0f;
 	
+	glm::vec3 resetPosition;
 
 	// constructor of airplane without camera
 	Airplane(std::string path,glm::vec3 pos, float spd);
 
 	// constructor with camera - this one is controlled by player
-	Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd,bool fp, bool _flipPitch);
+	Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd, bool fp, bool _flipPitch);
 
 	// movemment handlers
 	void processMovement(Move_direction direction, float deltaTime);
@@ -43,7 +41,7 @@ public:
 	void update(float deltaTime);
 	
 	// sets default settings
-	void reset(glm::vec3 offset);
+	void reset();
 
 	glm::mat4 calcModelMatrix(glm::mat4 matrix, float scale);
 

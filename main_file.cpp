@@ -111,7 +111,7 @@ void initCamera();
 void initShaders();
 void initModels();
 void initTerrain();
-
+void update(float deltaTime);
 
 // Procedura obsługi błędów
 void error_callback(int error, const char* description) {
@@ -139,6 +139,9 @@ void init(GLFWwindow* window)
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+
+	// init everything else
+
 	initShaders();
 	
 	initModels();
@@ -149,6 +152,7 @@ void init(GLFWwindow* window)
 
 	// create airPlane player object
 	airPlane = new Airplane("models/airplane/11804_Airplane_v2_l2.obj", cam, startingPoint, AIRPLANE_SPEED, FIRST_PERSON,FLIP_X_AXIS_ROTATION_MOVEMENT);
+	airPlane->resetPosition = startingPoint;
 
 	//non player - to be tested
 	//airPlane = new Airplane("models/airplane/11804_Airplane_v2_l2.obj", glm::vec3(0.0f, 0.0f, -5.0f), AIRPLANE_SPEED);
@@ -217,7 +221,7 @@ void initTerrain()
 
 void initLights()
 {
-	//temporary light setup - for testing purposes only
+	//temporary light setup
 	dirLight.light.direction = dirLightDirecrion;
 	dirLight.light.color = glm::vec3(1.0f, 1.0f, 1.0f);
 	dirLight.light.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
@@ -288,18 +292,20 @@ void initLights()
 // drawing
 void drawTerrain(glm::mat4 projection, glm::mat4 view, Shader* shader)
 {
-	glm::mat4 M = glm::mat4(1.0f);
+	glm::mat4 model = glm::mat4(1.0f);
 
 	// przenies srodek terenu na srodek swiata
-	M = glm::translate(M, glm::vec3(grid->Width * grid->WorldScale / -2.0f, grid->GetMinHeight(), grid->Depth * grid->WorldScale / -2.0f));
-	glm::mat4 VP = projection * view * M;
+	model = glm::translate(model, glm::vec3(grid->Width * grid->WorldScale / -2.0f, grid->GetMinHeight(), grid->Depth * grid->WorldScale / -2.0f));
+
 
 	// set shader variables / uniforms
 	shader->use();
-	shader->setFloat("gMinHeight", grid->MinHeight * grid->HeightScaleFactor);
-	shader->setFloat("gMaxHeight", grid->MaxHeight * grid->HeightScaleFactor);
-	shader->setMat4("gVP", VP);
-	shader->setVec3("gReversedLightDir", LIGHT_DIR);
+	shader->setFloat("minHeight", grid->MinHeight * grid->HeightScaleFactor);
+	shader->setFloat("maxHeight", grid->MaxHeight * grid->HeightScaleFactor);
+	shader->setMat4("model", model);
+	shader->setMat4("view", view);
+	shader->setMat4("projection", projection);
+	shader->setVec3("lightDir", dirLight.light.direction);
 
 	grid->Draw(*shader);
 }
@@ -421,7 +427,6 @@ void drawAirplane(glm::mat4 projection, glm::mat4 view, Shader* shader)
 	// RENDER AIRPLANE MODEL
 	glm::mat4 model = glm::mat4(1.0f);
 	model = airPlane->calcModelMatrix(model, AIRPLANE_SCALE);
-	airPlane->update(deltaTime);
 	shader->setMat4("model", model);
 	airPlane->model->Draw(*shader);
 }
@@ -466,11 +471,16 @@ void drawScene(GLFWwindow* window)
 	glfwSwapBuffers(window);
 }
 
+void update(float deltaTime)
+{
+	airPlane->update(deltaTime);
+}
 
 int main(void)
 {
 	srand(std::time(NULL));
 	GLFWwindow* window = initOpenGL(); // initialize openGl and create window
+
 	// set all necesarry settings / create all necessary objects
 	init(window);
 
@@ -483,6 +493,7 @@ int main(void)
 
 
 		processInput();
+		update(deltaTime);
 		drawScene(window);
 
 		glfwPollEvents(); //Wykonaj procedury callback w zalezności od zdarzeń jakie zaszły.
@@ -538,7 +549,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	// reset airplane position 
 	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
 	{
-		airPlane->reset(startingPoint);
+		airPlane->reset();
 	}
 
 	// AIRPLANE MOVEMENT

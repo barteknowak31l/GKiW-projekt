@@ -4,7 +4,7 @@ layout(location = 0) out vec4 FragColor;
 in vec4 Color;
 in vec2 Tex;
 in vec3 Normal;
-in vec3 WorldPos;
+in vec3 LocalPos;
 
 uniform sampler2D terrainTexture;
 
@@ -24,7 +24,7 @@ uniform float lv5;
 
 
 
-uniform vec3 gReversedLightDir;
+uniform vec3 lightDir;
 
 // prototypes
 vec4 calcTexture();
@@ -34,6 +34,8 @@ void main()
 
     // diffuse 
     vec3 Normal_ = normalize(Normal);
+
+    vec3 gReversedLightDir = vec3(lightDir.x, -lightDir.y, lightDir.z);
 
     float Diffuse = max(dot(Normal_, gReversedLightDir),0);
 
@@ -47,7 +49,7 @@ vec4 calcTexture()
 {
     vec4 tex;
 
-    float Height = WorldPos.y;
+    float Height = LocalPos.y;
 
  if(Height < lv0)
     {

@@ -39,6 +39,9 @@
     <ClCompile Include="Grid.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
+    <ClCompile Include="GameObject.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
@@ -80,6 +83,9 @@
     <ClInclude Include="Grid.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\colorShader.fs">
@@ -98,6 +104,12 @@
       <Filter>Pliki zasobów</Filter>
     </None>
     <None Include="shaders\modelShader.vs">
+      <Filter>Pliki zasobów</Filter>
+    </None>
+    <None Include="shaders\terrain.fs">
+      <Filter>Pliki zasobów</Filter>
+    </None>
+    <None Include="shaders\terrain.vs">
       <Filter>Pliki zasobów</Filter>
     </None>
   </ItemGroup>

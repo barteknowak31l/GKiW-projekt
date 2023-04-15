@@ -2,23 +2,21 @@
 #include <cmath>
 #include <algorithm>
 
-Airplane::Airplane(std::string path,glm::vec3 pos, float spd)
+Airplane::Airplane(std::string path,glm::vec3 pos, float spd) :GameObject(path, pos)
 {
-	model = new Model(path);
+	//model = new Model(path);
 	transform.Position = pos;
 	speed = spd;
 	isPlayer = false;
 	yaw = 0.0f;
 	flipPitch = false;
 
-	reset(transform.Position);
+	reset();
 }
 
-Airplane::Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd, bool fp, bool _flipPitch)
+Airplane::Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd, bool fp, bool _flipPitch):GameObject(path,pos)
 {
-	model = new Model(path);
 	camera = _camera;
-	transform.Position = pos;
 	speed = spd;
 	firstPerson = fp;
 	if (fp)
@@ -33,7 +31,7 @@ Airplane::Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd, 
 	yaw = 0.0f;
 
 	camera->SetPosition(transform.Position + cameraOffset.x * transform.Right + cameraOffset.y * transform.Up + cameraOffset.z * transform.Front);
-	reset(transform.Position);
+	reset();
 }
 
 
@@ -226,7 +224,7 @@ void Airplane::handleCamera()
 	}
 }
 
-void Airplane::reset(glm::vec3 pos)
+void Airplane::reset()
 {
 
 	// reset vars responsible for turning around
@@ -239,7 +237,7 @@ void Airplane::reset(glm::vec3 pos)
 	camera->flipY = false;
 
 	// place AirPlane on given position with no rotation
-	transform.SetPosition(pos);
+	transform.SetPosition(resetPosition);
 	transform.SetRotation(glm::vec3(PITCH, YAW, ROLL));
 
 	if (isPlayer)

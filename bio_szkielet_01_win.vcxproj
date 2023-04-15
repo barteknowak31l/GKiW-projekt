@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Airplane.cpp" />
+    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Line.cpp" />
     <ClCompile Include="main_file.cpp" />
@@ -32,6 +33,7 @@
     <ClInclude Include="Airplane.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DirectionalLight.h" />
+    <ClInclude Include="GameObject.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Line.h" />
@@ -50,6 +52,8 @@
     <None Include="shaders\lightCubeShader.vs" />
     <None Include="shaders\modelShader.fs" />
     <None Include="shaders\modelShader.vs" />
+    <None Include="shaders\terrain.fs" />
+    <None Include="shaders\terrain.vs" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
