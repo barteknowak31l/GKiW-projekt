@@ -1,5 +1,10 @@
 #include "Model.h"
 
+Model::Model(string const& path, bool gamma) : gammaCorrection(gamma)
+{
+    loadModel(path);
+    setupLights();
+}
 
 // draws the model, and thus all its meshes
 void Model::Draw(Shader& shader)
@@ -22,6 +27,7 @@ void Model::loadModel(string const& path)
     }
     // retrieve the directory path of the filepath
     directory = path.substr(0, path.find_last_of('/'));
+
 
     // process ASSIMP's root node recursively
     processNode(scene->mRootNode, scene);
@@ -105,8 +111,13 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
         for (unsigned int j = 0; j < face.mNumIndices; j++)
             indices.push_back(face.mIndices[j]);
     }
+
     // process materials
     aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+
+
+
+
     // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
     // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
     // Same applies to other texture as the following list summarizes:
@@ -117,33 +128,39 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
     // 1. diffuse maps
     vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
     textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+
     // 2. specular maps
     vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
     textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-    // 3. normal maps
-    std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());                                               //THESE TWO TYPES SHOULD GET SWAPPED ? ? ? /not used anyway 
-    // 4. height maps
-    std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
+
+    // 3. height maps
+    std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_height");
+    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());                                               
+
+    // 4. ambient maps
+    std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_ambient");
     textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
 
-    //process material data
-    //get ambient color
+
+
+    // process material data
+    //   
+    // get ambient color
     glm::vec3 color;
     material->Get(AI_MATKEY_COLOR_AMBIENT, color);
     mat.Ambient = color;
 
 
-    //get diffuse color
+    // get diffuse color
     material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
     mat.Diffuse = color;
 
-    //get specular color
+    // get specular color
     material->Get(AI_MATKEY_COLOR_SPECULAR, color);
     mat.Specular = color;
 
-    //get shininees
+    // get shininees
     float shininess;
     material->Get(AI_MATKEY_SHININESS, shininess);
     mat.Shininess = shininess;
@@ -153,7 +170,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 }
 
 // checks all material textures of a given type and loads the textures if they're not loaded yet.
-   // the required info is returned as a Texture struct.
+// the required info is returned as a Texture struct.
 vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName)
 {
     vector<Texture> textures;
@@ -188,6 +205,7 @@ vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type,
 // set directional/spot light data
 void Model::setLightData(Light* light)
 {
+    // switch gives opportunity to implement other light types
     switch (light->type)
     {
 
@@ -201,29 +219,20 @@ void Model::setLightData(Light* light)
         directionalLight.light.specular = l->light.specular;
         break;
     }
-
-    case SPOT:
-    {
-        SpotLight* l = dynamic_cast<SpotLight*>(light);
-        spotLight = *l;
-    }
-
     default:
         break;
     }
 }
 
-
 // set point lights
-void Model::setLightData(static vector<PointerLight> lights, Shader& shader, bool draw)
+void Model::setLightData(static vector<PointerLight> lights, Shader& shader)
 {
+    assert(lights.size() <= MAX_NUM_LIGHTS);
 
     vector<PointLight> _lights;
     for (int i = 0; i < lights.size(); i++)
     {
         _lights.push_back(lights[i].light);
-        if (draw)
-            lights[i].draw(shader);
 
     }
 
@@ -239,7 +248,6 @@ void Model::setupLights()
     directionalLight.light.specular = glm::vec3(0.1f, 0.1f, 0.1f);
 
 }
-
 
 
 unsigned int TextureFromFile(const char* path, const string& directory, bool gamma)

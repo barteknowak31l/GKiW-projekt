@@ -3,10 +3,10 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+
 #include <stb_image.h>
+
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -15,7 +15,6 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#include <map>
 #include <vector>
 
 #include "Mesh.h"
@@ -36,32 +35,25 @@ public:
     vector<Mesh>    meshes;             
 
     DirectionalLight directionalLight;  // stores directionalLight affecting this model
-    SpotLight spotLight;                // stores spotLight affecting this model
     vector<PointLight> pointLights;     // stores pointLights that are affecting this model
 
     string directory;                   // path to model data folder
-    bool gammaCorrection;               // idk yet
+    bool gammaCorrection;               // idk what is it
 
-    //shouldnt be used / use Model(string const& path, bool gamma = false) instead
-    Model()
-    {
-        ;
-    }
     // constructor, expects a filepath to a 3D model.
-    Model(string const& path, bool gamma = false) : gammaCorrection(gamma)
-    {
-        loadModel(path);
-        setupLights();
-    }
+    Model(string const& path, bool gamma = false);
 
     // draws the model, and thus all its meshes
     void Draw(Shader& shader);
 
+
+    // light data is stored in Model object instead of being stored in every mesh object
+
     // set directional light data
     void setLightData(Light* light);
     
-    // set point light data
-    void setLightData(static vector<PointerLight> lights, Shader& shader, bool draw);
+    // set point light data 
+    void setLightData(static vector<PointerLight> lights, Shader& shader);
 
 
 private:

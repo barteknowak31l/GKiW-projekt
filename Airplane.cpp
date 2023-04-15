@@ -1,7 +1,6 @@
 #include "Airplane.h"
-
-
 #include <cmath>
+#include <algorithm>
 
 Airplane::Airplane(std::string path,glm::vec3 pos, float spd)
 {
@@ -33,7 +32,7 @@ Airplane::Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd, 
 	isPlayer = true;
 	yaw = 0.0f;
 
-	camera->SetPosition(transform.Position + cameraOffset.x * transform.Right + cameraOffset.y * transform.Up + cameraOffset * transform.Front);
+	camera->SetPosition(transform.Position + cameraOffset.x * transform.Right + cameraOffset.y * transform.Up + cameraOffset.z * transform.Front);
 	reset(transform.Position);
 }
 
@@ -91,9 +90,6 @@ void Airplane::processMovement(Move_direction direction, float deltaTime)
 		pitch -= yawDelta * deltaTime;
 	}
 
-	//float angle = acos(glm::dot(transform.Position, transform.Position+cameraOffset) / (glm::length(transform.Position) * glm::length(transform.Position + cameraOffset) ) );
-	//angle = glm::degrees(angle);
-
 	float max = 360.0f;
 	if (pitch > max)
 	{
@@ -107,8 +103,11 @@ void Airplane::processMovement(Move_direction direction, float deltaTime)
 
 
 	// THIS IS FOR PLAYER ONLY - involves camera movement
-	handleCamera();
+	if(isPlayer)
+		handleCamera();
 
+
+	// finally, after all calculations apply rotation to transform
 	if (flipPitch)
 	{
 		transform.SetRotation(glm::vec3(PITCH - pitch, YAW + yaw, ROLL));
@@ -123,13 +122,15 @@ void Airplane::processMovement(Move_direction direction, float deltaTime)
 
 void Airplane::onMovementRelease(Move_direction dir)
 {
-	//if (!isPlayer) return;
+	if (!isPlayer) return;
 
-	// if no rotation input - set variables to start back-to-normal-state animation
+	// if no rotation input - set variables to apply back-to-normal-state animation
 	if (dir == M_LEFT || dir == M_RIGHT)
 	{
 		isRotatePressed = false;
 		changeYaw = true;
+
+		// these two are complementary - one set to true decides about animation direction
 		decrementYaw = yawAnimation > 0;
 		incrementYaw = yawAnimation < 0;
 	}
@@ -137,7 +138,6 @@ void Airplane::onMovementRelease(Move_direction dir)
 
 void Airplane::update(float deltaTime)
 {
-	std::cout << pitch << std::endl;
 	handleTurnAnimation(deltaTime);
 }
 
@@ -154,6 +154,8 @@ void Airplane::handleTurnAnimation(float deltaTime)
 		if (decrementYaw)
 		{
 			yawAnimation -= yawAnimationDelta * deltaTime;
+
+			// check if animation should stop
 			decrementYaw = yawAnimation > 0;
 			changeYaw = yawAnimation > 0;
 		}
@@ -161,12 +163,13 @@ void Airplane::handleTurnAnimation(float deltaTime)
 		if (incrementYaw)
 		{
 			yawAnimation += yawAnimationDelta * deltaTime;
+			
+			// check if animation should stop
 			incrementYaw = yawAnimation < 0;
 			changeYaw = yawAnimation < 0;
-
 		}
 
-		// fp camera depends on yawAnimation, so update it too
+		// first person camera depends on yawAnimation, so update it too
 		if (firstPerson)
 		{
 			camera->setRotation(transform.Pitch, transform.Yaw, yawAnimation);
@@ -174,7 +177,7 @@ void Airplane::handleTurnAnimation(float deltaTime)
 		}
 
 	}
-	// to avoid floating point accuracy problems
+	// to avoid floating point accuracy problems, when close to 0, just set it to 0
 	if (abs(yawAnimation) <= 0.1)
 	{
 		yawAnimation = 0;
@@ -188,15 +191,18 @@ void Airplane::handleCamera()
 	// THIS IS FOR PLAYER ONLY - involves camera movement
 	if (isPlayer)
 	{
-		// turning camera together with airplane - gives effect of rolling head(?)
+		if (camera->enableMovement)
+			return;
+
+		// turning camera together with airplane - gives effect of rolling head
 		if (firstPerson)
 		{
 			camera->setRotation(transform.Pitch, transform.Yaw, yawAnimation);
 			camera->parentPosition = camera->transform.Position + camera->transform.Front;
 		}
-		else
+		else // third person camera
 		{
-	
+			// flip camera Up vector to avoid screen rotating while making barrel roll
 			if (transform.Pitch >= 90.0f && transform.Pitch <= 270.0f)
 			{
 				camera->flipY = true;
@@ -210,8 +216,11 @@ void Airplane::handleCamera()
 				camera->flipY = false;
 			}
 
+			// update camera LookAt 2nd argument - point to look at
 			camera->parentPosition = glm::vec3(transform.Position.x, transform.Position.y, transform.Position.z);
 		}
+
+		// update camera position
 		camera->SetPosition(transform.Position + cameraOffset.x * transform.Right + cameraOffset.y * transform.Up + cameraOffset.z * transform.Front);
 
 	}
@@ -225,10 +234,13 @@ void Airplane::reset(glm::vec3 pos)
 	yaw = 0;
 	pitch = 0;
 
+
+	// make sure camera Up vector is not flipped
+	camera->flipY = false;
+
 	// place AirPlane on given position with no rotation
 	transform.SetPosition(pos);
 	transform.SetRotation(glm::vec3(PITCH, YAW, ROLL));
-	
 
 	if (isPlayer)
 	{
@@ -238,14 +250,35 @@ void Airplane::reset(glm::vec3 pos)
 			camera->setRotation(transform.Pitch, transform.Yaw, yawAnimation);
 			camera->parentPosition = camera->transform.Position + camera->transform.Front;
 		}
-		else
+		else // third person
 		{
 			camera->parentPosition = glm::vec3(transform.Position.x, transform.Position.y, transform.Position.z);
 			camera->setRotation(PITCH, YAW, ROLL);
 		}
+
+		// set camera position
 		camera->SetPosition(transform.Position + cameraOffset.x * transform.Right + cameraOffset.y * transform.Up + cameraOffset.z * transform.Front);
 	}
+}
 
+glm::mat4 Airplane::calcModelMatrix(glm::mat4 model, float scale)
+{
+	float rollRot = std::clamp(-glm::radians(YAW + yawAnimation + 90.0f), glm::radians(-30.0f), glm::radians(30.0f));
+	float pitchRot = transform.Pitch;
 
+	
+	model = glm::mat4(1.0f);
 
+	model = glm::translate(model, transform.Position);
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	// turning animation 
+	model = glm::rotate(model, -glm::radians(transform.Yaw + 90.0f), glm::vec3(.0f, .0f, 1.0f));
+	model = glm::rotate(model, glm::radians(pitchRot), glm::vec3(.0f, 1.0f, 0.0f));
+
+	model = glm::rotate(model, rollRot, glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(scale, scale, scale));
+
+	return model;
 }

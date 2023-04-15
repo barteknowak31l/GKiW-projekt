@@ -1,7 +1,7 @@
 #ifndef POINTER_LIGHT
 #define POINTER_LIGHT
-
 #include "Light.h"
+
 class PointerLight : public Light
 {
     public :

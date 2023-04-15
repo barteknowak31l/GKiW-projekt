@@ -20,16 +20,19 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Airplane.cpp" />
+    <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Line.cpp" />
     <ClCompile Include="main_file.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="PointerLight.cpp" />
+    <ClCompile Include="TerrainGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Airplane.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DirectionalLight.h" />
+    <ClInclude Include="Grid.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Line.h" />
     <ClInclude Include="Mesh.h" />
@@ -37,6 +40,7 @@
     <ClInclude Include="PointerLight.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="stb_image.h" />
+    <ClInclude Include="TerrainGenerator.h" />
     <ClInclude Include="Transform.h" />
   </ItemGroup>
   <ItemGroup>

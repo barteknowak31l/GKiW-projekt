@@ -8,13 +8,6 @@
 #include "Transform.h"
 
 
-// Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
-enum Camera_Movement {
-    FORWARD,
-    BACKWARD,
-    LEFT,
-    RIGHT
-};
 
 // Default camera values
 const float YAW = -90.0f;
@@ -40,7 +33,7 @@ public:
     // flip Up vector to avoid camera flipping when rotating around X (pitch)
     bool flipY = false;
 
-
+    // transform to look at when camera is not set to be FREE_CAM - enableMovement = false
     glm::vec3 parentPosition = glm::vec3(0.0f, 0.0f, 0.0f);
     bool enableMovement;
 
@@ -72,28 +65,36 @@ public:
     glm::mat4 GetViewMatrix()
     {
 
-        if (flipY)
+        if (enableMovement) // free cam
         {
-            return glm::lookAt(transform.Position, parentPosition, -transform.Up);
+            return glm::lookAt(transform.Position, transform.Position + transform.Front, transform.Up);
         }
-        else
-        return glm::lookAt(transform.Position,parentPosition, transform.Up);
+        else // follow parent (airplane)
+        {
+            if (flipY)
+            {
+                return glm::lookAt(transform.Position, parentPosition, -transform.Up);
+            }
+            else
+                return glm::lookAt(transform.Position, parentPosition, transform.Up);
+        }
+
     }
 
     // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-    void ProcessKeyboard(Camera_Movement direction, float deltaTime)
+    void ProcessKeyboard(Move_direction direction, float deltaTime)
     {
 
         if (!enableMovement) return;
 
         float velocity = MovementSpeed * deltaTime;
-        if (direction == FORWARD)
+        if (direction == M_FORWARD)
             transform.Position += transform.Front * velocity;
-        if (direction == BACKWARD)
+        if (direction == M_BACKWARD)
             transform.Position -= transform.Front * velocity;
-        if (direction == LEFT)
+        if (direction == M_LEFT)
             transform.Position -= transform.Right * velocity;
-        if (direction == RIGHT)
+        if (direction == M_RIGHT)
             transform.Position += transform.Right * velocity;
 
         //Position.y = 0.0f; // <-- this one-liner keeps the user at the ground level (xz plane)
@@ -120,7 +121,7 @@ public:
         }
 
         // update Front, Right and Up Vectors using the updated Euler angles
-        transform.SetRotation(transform.EulerAngles);
+        transform.SetRotation(transform.Pitch, transform.Yaw, transform.Roll);
 
     }
 
@@ -142,13 +143,7 @@ public:
         transform.Position = pos;
     }
 
-    //used to rotate camera with airplane
-    void setRoll(float r)
-    {
-        transform.Roll = ROLL + r;
-        transform.SetRotation(transform.EulerAngles);
 
-    }
 
 
     void setRotation(float p, float y, float r)

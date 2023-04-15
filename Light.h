@@ -8,9 +8,6 @@
 
 #include "Shader.h"
 
-// This is abstract class for representing various lights 
-
-
 // Availble light types
 enum Light_Types {
     DIRECTIONAL,
@@ -18,6 +15,7 @@ enum Light_Types {
     SPOT
 };
 
+// STRUCTS for storing light data compatibile with structs in modelShader
 
 // struct for Directional light data
 struct DirLight {
@@ -60,6 +58,8 @@ struct SpotLight {
     float quadratic;
 };
 
+
+// Abstract class for representing various lights 
 class Light
 {
 
@@ -117,7 +117,7 @@ public:
 	// every light should have defined its type 
 	Light_Types type;
 
-	//some (point) lights may be drew
+	//some (point) lights may be drawn
 	virtual void draw(Shader& shader) = 0;
 
 };

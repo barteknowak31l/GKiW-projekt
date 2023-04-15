@@ -1,26 +1,5 @@
 #include "PointerLight.h"
 
-void PointerLight::setup()
-{
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    //unbind buffers
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-
-}
-
 PointerLight::PointerLight()
 {
     setup();
@@ -43,6 +22,27 @@ PointerLight::PointerLight(glm::vec3 position, glm::vec3 color, glm::vec3 ambien
 
 }
 
+void PointerLight::setup()
+{
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    //unbind buffers
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+
+}
+
 void PointerLight::PointerLight::draw(Shader& shader)
 {
     shader.use();
@@ -54,6 +54,4 @@ void PointerLight::PointerLight::draw(Shader& shader)
     shader.setMat4("model", model);
     shader.setVec3("color", light.color);
     glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
 }

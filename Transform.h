@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
-#include "Line.h"
+
 
 // This class represents local coordinate system of an object
 
@@ -133,18 +133,6 @@ public:
         updateVectors();
     }
     
-
-    // NOT WORKING YET - draw local axes on screen
-    void DrawLines(glm::mat4 projection, glm::mat4 view, glm::mat4 model )
-    {
-        
-        std::cout << "x " << Position.x << " y " << Position.y << " z " << Position.z << std::endl;
-        Line l = Line(Position, Position + Front);
-       // l.setMVP(projection * view * model);
-        l.draw();
-
-    }
-
 private:
 
     // calculate local axes with current Euler angles

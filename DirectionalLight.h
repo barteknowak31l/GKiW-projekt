@@ -1,8 +1,7 @@
 #ifndef DIRECTIONAL_LIGHT
 #define DIRECTIONAL_LIGHT
-
-
 #include "Light.h"
+
 class DirectionalLight : public Light
 {
 public:

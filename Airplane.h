@@ -3,11 +3,9 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <stdlib.h>
-#include <stdio.h>
 #include <iostream>
 
 #include "Model.h"
@@ -30,9 +28,6 @@ public:
 	// used for animating rotation on Z axis during turn
 	float yawAnimation = 0.0f;
 	
-	// flying speed
-	float speed;
-
 
 	// constructor of airplane without camera
 	Airplane(std::string path,glm::vec3 pos, float spd);
@@ -50,11 +45,18 @@ public:
 	// sets default settings
 	void reset(glm::vec3 offset);
 
+	glm::mat4 calcModelMatrix(glm::mat4 matrix, float scale);
+
 
 private:
 
+
+	// true if this object is controlled by playert
 	bool isPlayer;
 	bool firstPerson = false;
+
+	// flying speed
+	float speed;
 
 	// used for rotating transform when turning around
 	//
@@ -67,7 +69,7 @@ private:
 	float pitch = 0.0f;
 	bool flipPitch;
 
-	// used to animate that turning - used in model matrix rotation (currently in main() function)
+	// used to animate rising and diving - used in model matrix rotation (currently in main() function) - todo - function to calculate Model matrix based on pitch/yaw/roll
 	//
 	// maximum angle of rotation when turning (animation only)
 	float yawAnimationMax = 30.0f;		
@@ -84,11 +86,11 @@ private:
 	// current offset (first/third person)
 	glm::vec3 cameraOffset;
 
-	// as name says
+	// sets variables associated with turning animation
 	void handleTurnAnimation(float deltaTime);
+	
+	// sets rotation & position of the camera while moving
 	void handleCamera();
-
-
 };
 #endif
 
