@@ -33,6 +33,8 @@ public:
 	// constructor with camera - this one is controlled by player
 	Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd, bool fp, bool _flipPitch, glm::vec3 scale);
 
+	~Airplane() { ; };
+
 	// movemment handlers
 	void processMovement(Move_direction direction, float deltaTime);
 	void onMovementRelease(Move_direction dir);

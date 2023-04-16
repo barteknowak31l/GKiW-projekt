@@ -15,6 +15,7 @@ public:
     Shader* lightShader;
 
     Skull(const char* path, glm::vec3 pos, Shader* ls) : GameObject(path, pos) { lightShader = ls; };
+    ~Skull() { ; };
 
     void update(float deltaTime);
     void reset() { GameObject::defaultReset(); }

@@ -434,17 +434,9 @@ void drawScene(GLFWwindow* window)
 	glfwSwapBuffers(window);
 }
 
-// this is only temporary solution: GameObject class will handle all updates
 void update(float deltaTime)
 {
-	airPlane->update(deltaTime);
-
-
-	for (int i = 0; i < numOfSkulls; i++)
-	{
-		skulls[i]->update(deltaTime);
-	}
-
+	GameObject::UpdateGameObjects(deltaTime);
 }
 
 
