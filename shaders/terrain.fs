@@ -25,6 +25,7 @@ uniform float lv5;
 
 
 uniform vec3 lightDir;
+uniform vec3 lightColor;
 
 // prototypes
 vec4 calcTexture();
@@ -41,7 +42,7 @@ void main()
 
     Diffuse = max(0.3f, Diffuse);
 
-	FragColor = Diffuse * calcTexture();
+	FragColor =  Diffuse * vec4(lightColor,1.0) * calcTexture();
 	
 }
 

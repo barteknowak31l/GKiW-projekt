@@ -35,9 +35,10 @@ const bool FIRST_PERSON = false;	// FIRST PERSON AKTUALNIE NIE DZIALA
 const bool FREE_CAM = false;
 const bool FLIP_X_AXIS_ROTATION_MOVEMENT = false;
 const float FP_CAM_Y_OFFSET = -0.0f;
-const float AIRPLANE_SCALE = 0.001f;
+const float AIRPLANE_SCALE = 0.001f; 
 const float FOV = 45.0f;
 const bool ENABLE_ANISOTROPY = true;
+const bool DAY_NIGHT_CYCLE = true;
 
 
 // camera
@@ -362,6 +363,7 @@ void drawTerrain(glm::mat4 projection, glm::mat4 view, Shader* shader)
 	shader->setMat4("view", view);
 	shader->setMat4("projection", projection);
 	shader->setVec3("lightDir", dirLight.light.direction);
+	shader->setVec3("lightColor", dirLight.light.color);
 
 	grid->Draw(*shader);
 }
@@ -434,9 +436,28 @@ void drawScene(GLFWwindow* window)
 	glfwSwapBuffers(window);
 }
 
+
 void update(float deltaTime)
 {
 	GameObject::UpdateGameObjects(deltaTime);
+	
+	if (DAY_NIGHT_CYCLE)
+	{
+		// day night cycle
+		dirLight.dayNight(deltaTime);
+
+		//update lights
+			// light for skulls
+		for (int i = 0; i < numOfSkulls; i++)
+		{
+			light = &dirLight;
+			skulls[i]->model->setLightData(light);
+		}
+		light = &dirLight;
+		airPlane->model->setLightData(light);
+	}
+
+
 }
 
 

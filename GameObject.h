@@ -24,7 +24,8 @@ class GameObject
 public:
 	Transform transform;
 	Model* model;
-
+	
+	GameObject() { ; };
 	GameObject(std::string path, glm::vec3 pos);
 	~GameObject();
 
