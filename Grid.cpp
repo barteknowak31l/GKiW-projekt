@@ -328,3 +328,9 @@ float Grid::GetMaxHeight()
 	}
 	return max;
 }
+
+GridVertex Grid::GetGridVertex(int index)
+{
+	assert(index <= Vertices.size());
+	return Vertices[index];
+}

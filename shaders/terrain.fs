@@ -5,6 +5,7 @@ in vec4 Color;
 in vec2 Tex;
 in vec3 Normal;
 in vec3 LocalPos;
+in vec3 FragPos;
 
 uniform sampler2D terrainTexture;
 
@@ -27,8 +28,28 @@ uniform float lv5;
 uniform vec3 lightDir;
 uniform vec3 lightColor;
 
+
+// spotlight
+struct Spotlight{
+    vec3 position;
+    vec3 direction;
+    vec3 color;
+    float cutOff;
+    float outerCutOff;
+
+    //attenaution
+    float constant;
+    float linear;
+    float quadratic;
+
+};
+uniform Spotlight light1;
+uniform Spotlight light2;
+uniform bool enableAirplaneFlashLight;
+
 // prototypes
 vec4 calcTexture();
+vec3 calcSpotLight(Spotlight l);
 
 void main()
 {
@@ -42,8 +63,16 @@ void main()
 
     Diffuse = max(0.3f, Diffuse);
 
-	FragColor =  Diffuse * vec4(lightColor,1.0) * calcTexture();
-	
+    vec4 texture = calcTexture();
+
+    if(enableAirplaneFlashLight)
+    {
+    	FragColor =  Diffuse * vec4(lightColor,1.0) * texture + texture * vec4(calcSpotLight(light1),1.0) + texture *vec4(calcSpotLight(light2),1.0);
+    }
+    else{
+    	FragColor =  Diffuse * vec4(lightColor,1.0) * texture;
+    }
+
 }
 
 vec4 calcTexture()
@@ -96,4 +125,21 @@ vec4 calcTexture()
     }
 
     return tex;
+}
+
+vec3 calcSpotLight(Spotlight l)
+{
+    vec3 lightDirection = normalize(l.position - FragPos);
+    
+    float theta = dot(lightDirection, normalize(-l.direction));
+    float epsilon   = l.cutOff - l.outerCutOff;
+    float intensity = clamp((theta - l.outerCutOff) / epsilon, 0.0, 1.0); 
+    
+    float distance    = length(l.position - FragPos);
+    float attenuation = 1.0 / (l.constant + l.linear * distance + 
+    		    l.quadratic * (distance * distance)); 
+
+
+        return l.color * intensity * attenuation;
+
 }

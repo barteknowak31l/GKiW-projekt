@@ -1,23 +1,29 @@
 #include "Airplane.h"
 #include <cmath>
 #include <algorithm>
+#include "Grid.h"
 
-Airplane::Airplane(std::string path,glm::vec3 pos, float spd, glm::vec3 scale) :GameObject(path, pos)
+Airplane::Airplane(std::string path,glm::vec3 pos, Grid* _grid, float spd, glm::vec3 scale, glm::vec3 flashlightColor, float _flashlightOffset) :GameObject(path, pos)
 {
 	transform.setScale(scale);
 	speed = spd;
+	grid = _grid;
 	isPlayer = false;
 	yaw = 0.0f;
 	flipPitch = false;
 
+	flashlightOffset = _flashlightOffset;
+	setupFlashlights(flashlightColor);
+	
 	reset();
 }
 
-Airplane::Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd, bool fp, bool _flipPitch, glm::vec3 scale):GameObject(path,pos)
+Airplane::Airplane(std::string path, Camera* _camera, glm::vec3 pos, Grid* _grid, float spd, bool fp, bool _flipPitch, glm::vec3 scale, glm::vec3 flashlightColor, float _flashlightOffset):GameObject(path,pos)
 {
 	transform.setScale(scale);
 	camera = _camera;
 	speed = spd;
+	grid = _grid;
 	firstPerson = fp;
 	if (fp)
 		cameraOffset = firstPersonCamOffset;
@@ -31,14 +37,54 @@ Airplane::Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd, 
 	yaw = 0.0f;
 
 	camera->SetPosition(transform.Position + cameraOffset.x * transform.Right + cameraOffset.y * transform.Up + cameraOffset.z * transform.Front);
+
+	flashlightOffset = _flashlightOffset;
+	setupFlashlights(flashlightColor);
+
+	resetPosition = pos;
 	reset();
+
+	collider1 = transform.Position - transform.Up;
+	collider2 = transform.Position + transform.Front;
 }
 
 
 void Airplane::processMovement(Move_direction direction, float deltaTime)
 {
 	//THIS PART SHOULD WORK ALSO FOR NON PLAYER AIRPLANES  - need to be tested
+
+	// check for collision with terrain
 	
+	float h1 = checkTerrainCollision(grid, collider1);
+	float h2 = checkTerrainCollision(grid, collider2);
+
+	bool h1collision;
+	bool h2collision;
+
+	if (transform.Position.y <= h1 && transform.Position.y <= h2)
+	{
+		collision = true;
+		h1collision = true;
+		h2collision = true;
+	}
+	else if (transform.Position.y <= h1)
+	{
+		collision = true;
+		h1collision = true;
+	}
+	else if (transform.Position.y <= h2)
+	{
+		collision = true;
+		h2collision = true;
+	}
+	else
+	{
+		collision = false;
+		h1collision = false;
+		h2collision = false;
+	}
+
+
 	// check if there's rotation input
 	isRotatePressed =  (direction == M_RIGHT || direction == M_LEFT);		
 
@@ -54,6 +100,16 @@ void Airplane::processMovement(Move_direction direction, float deltaTime)
 
 
 	transform.Move(movement);
+
+	// if there is collision - set airplane y to terrain y position
+	if (collision)
+	{
+		if(h1collision)
+		transform.SetPosition(glm::vec3(transform.Position.x, h1 + collider1Offset, transform.Position.z));
+		else
+			transform.SetPosition(glm::vec3(transform.Position.x, h2 + collider2Offset, transform.Position.z));
+
+	}
 
 	// alter yaw data
 	if (direction == M_RIGHT)
@@ -110,6 +166,11 @@ void Airplane::processMovement(Move_direction direction, float deltaTime)
 	else
 		transform.SetRotation(glm::vec3(PITCH + pitch, YAW + yaw, ROLL));
 
+
+	// move colliders
+	collider1 = transform.Position - transform.Up * collider1Offset;
+	collider2 = transform.Position + transform.Front * collider2Offset;
+
 }
 
 void Airplane::onMovementRelease(Move_direction dir)
@@ -131,6 +192,7 @@ void Airplane::onMovementRelease(Move_direction dir)
 void Airplane::update(float deltaTime)
 {
 	handleTurnAnimation(deltaTime);
+	handleFlashlight();
 }
 
 
@@ -251,15 +313,18 @@ void Airplane::reset()
 		// set camera position
 		camera->SetPosition(transform.Position + cameraOffset.x * transform.Right + cameraOffset.y * transform.Up + cameraOffset.z * transform.Front);
 	}
+
+
+	// move colliders
+	collider1 = transform.Position - transform.Up * collider1Offset;
+	collider2 = transform.Position + transform.Front * collider2Offset;
+
 }
 
 glm::mat4 Airplane::calcModelMatrix(glm::mat4 model)
 {
 	float rollRot = std::clamp(-glm::radians(YAW + yawAnimation + 90.0f), glm::radians(-30.0f), glm::radians(30.0f));
 	float pitchRot = transform.Pitch;
-
-	
-	model = glm::mat4(1.0f);
 
 	model = glm::translate(model, transform.Position);
 	model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -273,4 +338,150 @@ glm::mat4 Airplane::calcModelMatrix(glm::mat4 model)
 	model = glm::scale(model, glm::vec3(transform.scale.x, transform.scale.y, transform.scale.z));
 
 	return model;
+}
+
+void Airplane::handleFlashlight()
+{
+
+	leftFlashlight.position = transform.Position + transform.Front * 1.0f + transform.Right * -flashlightOffset;
+	leftFlashlight.direction = transform.Front;
+
+	rightFlashlight.position = transform.Position + transform.Front * 1.0f + transform.Right * flashlightOffset;
+	rightFlashlight.direction = transform.Front;
+
+}
+
+void Airplane::setupFlashlights(glm::vec3 color)
+{
+	handleFlashlight();
+
+	leftFlashlight.color = color;
+	leftFlashlight.cutOff = glm::cos(glm::radians(6.5f));
+	leftFlashlight.outerCutOff = glm::cos(glm::radians(10.5f));
+	leftFlashlight.constant = 1.0f;
+	leftFlashlight.linear = 0.007f;
+	leftFlashlight.quadratic = 0.0002f;
+
+	rightFlashlight.color = color;
+	rightFlashlight.cutOff = glm::cos(glm::radians(6.5f));
+	rightFlashlight.outerCutOff = glm::cos(glm::radians(10.5f));
+	rightFlashlight.constant = 1.0f;
+	rightFlashlight.linear = 0.007f;
+	rightFlashlight.quadratic = 0.0002f;
+
+}
+
+float Airplane::checkTerrainCollision(Grid* grid, Transform collider)
+{
+
+	// pozycja szybowca (domyœlnie pozycja szybowca jest relatywna do pozycji terenu - teren ma swój pocz¹tek w punkcie (0,0) )
+	float posX = collider.Position.x;
+	float posZ = collider.Position.z;
+
+	// rozmiar pojedynczego kwadratu grida
+	float gridSquareSize = grid->Width * grid->WorldScale / (grid->Width - 1);
+
+	// dla danych posX, posZ znajdz odpowiadaj¹cy im kwadrat na gridzie
+	int gridX = (int)std::floor(posX / gridSquareSize);
+	int gridZ = (int)std::floor(posZ / gridSquareSize);
+
+	// sprawdz czy znaleziony kwadrat na pewno nalezy do grida:
+	if (gridX > grid->Width - 1 || gridX < 0 || gridZ > grid->Depth - 1 || gridZ < 0)
+	{
+		// szybowiec znajduje sie poza terenem
+		return 0.0f;
+	}
+
+	// znajdz dokladna pozycje szybowca na wyznaczonym kwadracie:
+	float xCoord = fModulo(posX,gridSquareSize) / gridSquareSize;
+	float zCoord = fModulo(posX, gridSquareSize) / gridSquareSize;
+
+
+	// ustal indeksy wierzcholkow tego kwadratu (kompatybilne z wektorem wierzcholkow w grid)
+	int bottomLeftIndex = gridZ * grid->Width + gridX;
+	int topLeftIndex = (gridZ + 1) * grid->Width + gridX;
+	int topRightIndex = (gridZ + 1) * grid->Width + gridX + 1;
+	int bottomRightIndex = (gridZ)*grid->Width + gridX + 1;
+
+
+
+	// znaj¹c pozycjê na kwadracie, ustal który to trójk¹t:
+	float height;
+	glm::vec3 bottomLeft;
+	glm::vec3 topLeft;
+	glm::vec3 topRight;
+	glm::vec3 bottomRight;
+	glm::vec2 planePos;
+
+	if (xCoord > 1 - zCoord)
+	{
+		// top left triangle - wspolrzedne: (0,0) (0,1), (1,1)
+		// barycentric dla wierzcholkow top left trójk¹ta
+		
+		bottomLeft = grid->GetGridVertex(bottomLeftIndex).Pos;
+		topLeft = grid->GetGridVertex(topLeftIndex).Pos;
+		topRight = grid->GetGridVertex(topRightIndex).Pos;
+		
+		planePos = glm::vec2(xCoord, zCoord);
+
+		height = barycentricInterpolation(glm::vec3(0,bottomLeft.y,0), glm::vec3(0,topLeft.y,1), glm::vec3(1,topRight.y,1), planePos);
+		
+		// srednia dziala ale nie idealnie
+		//height = (bottomLeft.y + topLeft.y + topRight.y) / 3.0f;
+	}
+	else
+	{
+		// diagonal or bottom right triangle - wspolrzedne: (0,0) (1,1), (1,0)
+		// barycentric dla wierzcholkow bottom right trójk¹ta
+
+		bottomLeft = grid->GetGridVertex(bottomLeftIndex).Pos;
+		topRight = grid->GetGridVertex(topRightIndex).Pos;
+		bottomRight = grid->GetGridVertex(bottomRightIndex).Pos;
+
+		planePos = glm::vec2(xCoord, zCoord);
+
+		height = barycentricInterpolation(glm::vec3(0,bottomLeft.y,0), glm::vec3(1,topRight.y,1), glm::vec3(1,bottomRight.y,0), planePos);
+		
+		// srednia dziala ale nie idalnie
+		//height = (bottomLeft.y + topRight.y + bottomRight.y) / 3.0f;
+	}
+
+	return height;
+
+}
+
+float Airplane::barycentricInterpolation(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec2 pos) {
+
+	float det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
+	float l1 = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
+	float l2 = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
+	float l3 = 1.0f - l1 - l2;
+	return l1 * p1.y + l2 * p2.y + l3 * p3.y;
+
+}
+
+
+float Airplane::fModulo(float x, float z)
+{
+	if (z > x) return x;
+
+	while (x > z)
+	{
+		x -= z;
+	}
+	return x;
+}
+
+Transform Airplane::GetCollider(int index)
+{
+	if (index == 1)
+	{
+		return collider1;
+	}
+	if (index == 2)
+	{
+		return collider2;
+	}
+	else
+		return Transform(glm::vec3(0),glm::vec3(0),0,0,0);
 }

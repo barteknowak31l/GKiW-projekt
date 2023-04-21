@@ -51,7 +51,7 @@ void PointerLight::PointerLight::draw(Shader& shader)
     glm::mat4 model;
     model = glm::mat4(1.0f);
     model = glm::translate(model, light.position);
-    model = glm::scale(model, glm::vec3(2.0f)); 
+    model = glm::scale(model, glm::vec3(cubeScale)); 
 
     shader.setMat4("model", model);
     shader.setVec3("color", light.color);

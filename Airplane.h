@@ -11,10 +11,25 @@
 #include "GameObject.h"
 #include "Camera.h"
 
+class Grid;
 
 // attached camera positions
 const glm::vec3 thirdPersonCamOffset = glm::vec3(0.0f, 0.0f, -4.0f);
 const glm::vec3 firstPersonCamOffset = glm::vec3(0.0f, -.2f, 0.5f);
+
+struct flashLight {
+	glm::vec3 position;
+	glm::vec3 direction;
+	glm::vec3 color;
+	float cutOff;
+	float outerCutOff;
+
+	//attenaution
+	float constant;
+	float linear;
+	float quadratic;
+
+};
 
 class Airplane : public GameObject
 {
@@ -22,16 +37,21 @@ public:
 
 	Camera* camera;
 
+	// flashlights
+	flashLight leftFlashlight;
+	flashLight rightFlashlight;
+	float flashlightOffset;
+
 	// used for animating rotation on Z axis during turn
 	float yawAnimation = 0.0f;
 	
 	glm::vec3 resetPosition;
 
 	// constructor of airplane without camera
-	Airplane(std::string path,glm::vec3 pos, float spd, glm::vec3 scale);
+	Airplane(std::string path,glm::vec3 pos, Grid* grid, float spd, glm::vec3 scale, glm::vec3 flashlightColor, float flashlightOffset);
 
 	// constructor with camera - this one is controlled by player
-	Airplane(std::string path, Camera* _camera, glm::vec3 pos, float spd, bool fp, bool _flipPitch, glm::vec3 scale);
+	Airplane(std::string path, Camera* _camera, glm::vec3 pos, Grid* grid, float spd, bool fp, bool _flipPitch, glm::vec3 scale, glm::vec3 flashlightColor, float flashlightOffset);
 
 	~Airplane() { ; };
 
@@ -46,6 +66,11 @@ public:
 	void reset();
 
 	glm::mat4 calcModelMatrix(glm::mat4 matrix);
+
+
+	float checkTerrainCollision(Grid* grid, Transform transform);
+
+	Transform GetCollider(int index);
 
 
 private:
@@ -86,11 +111,35 @@ private:
 	// current offset (first/third person)
 	glm::vec3 cameraOffset;
 
+	// collision checker
+	bool collision = true;
+
+	// colliders
+	Grid* grid;
+	Transform collider1;
+	float collider1Offset = .7f;
+	Transform collider2;
+	float collider2Offset = 1.5f;
+
+
 	// sets variables associated with turning animation
 	void handleTurnAnimation(float deltaTime);
 	
 	// sets rotation & position of the camera while moving
 	void handleCamera();
+
+	// updates flashlight position/direction
+	void handleFlashlight();
+	void setupFlashlights(glm::vec3 color);
+
+
+	// barycentric interpolation  for collision detection
+	float barycentricInterpolation(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec2 pos);
+
+
+	// calculate modulo for float
+	float fModulo(float x, float y);
+
 };
 #endif
 

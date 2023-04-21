@@ -9,6 +9,9 @@ class PointerLight : public Light
         // struct storing light data (defined in light.h)
         PointLight light;
 
+        // scale of cube for drawing purposes
+        float cubeScale = 1.0f; 
+
         // just for compilator to not throw billion errors
         PointerLight();
 

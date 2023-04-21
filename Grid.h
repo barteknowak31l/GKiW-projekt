@@ -78,6 +78,10 @@ public:
 	float GetMaxHeight();
 	float GetMinHeight();
 
+
+	// zwraca wierzcholek o podanych X,Z
+	GridVertex GetGridVertex(int index);
+
 	// generator terenu
 	TerrainGenerator tGenerator;
 

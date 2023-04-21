@@ -17,6 +17,7 @@ out vec4 Color;
 out vec2 Tex;
 out vec3 Normal;
 out vec3 LocalPos;
+out vec3 FragPos;
 
 void main()
 {
@@ -29,6 +30,7 @@ void main()
 	Tex = aTexCoords;
 
 	LocalPos = aPos;
+	FragPos =  vec3(model * vec4(aPos, 1.0));
 
     Normal = mat3(transpose(inverse(model))) * aNormal;
 
