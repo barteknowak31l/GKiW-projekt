@@ -1,16 +1,17 @@
-#include "Skull.h"
+#include "Bird.h"
+float birdSpeed = 5.0f;
 
-void Skull::drawLight(glm::mat4 p , glm::mat4 v)
+void Bird::drawLight(glm::mat4 p, glm::mat4 v)
 {
     lightShader->use();
     lightShader->setMat4("projection", p);
     lightShader->setMat4("view", v);
-	light.draw(*lightShader);
+    light.draw(*lightShader);
 }
 
-void Skull::setLightData(Shader* shader)
+void Bird::setLightData(Shader* shader)
 {
-	shader->use();
+    shader->use();
     string prefix = "pointLights[" + to_string(0) + "].";
     shader->setVec3(prefix + "position", light.light.position);
     shader->setVec3(prefix + "color", light.light.color);
@@ -23,10 +24,10 @@ void Skull::setLightData(Shader* shader)
 }
 
 
-void Skull::update(float deltaTime)
+void Bird::update(float deltaTime)
 {
     float rotFactor = 3.14f;
-    glm::vec3 rotation = glm::vec3(deltaTime ,0.0f , 0.0f);
-    transform.Move(rotation);
+    glm::vec3 translation = glm::vec3(deltaTime * birdSpeed, 0.0f, 0.0f);
+    transform.Move(translation);
 
 }

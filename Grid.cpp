@@ -1,7 +1,7 @@
 #include "Grid.h"
 #include "Shader.h"
 
-// utility dla struct vertex - inicjalizacja wierzcho³ka
+// utility dla struct vertex - inicjalizacja wierzchoï¿½ka
 void GridVertex::InitVertex(int x, int y, int z, int Width, int Depth, float worldScale)
 {
 	Pos = glm::vec3(x * worldScale, y, z * worldScale);

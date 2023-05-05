@@ -374,14 +374,14 @@ void Airplane::setupFlashlights(glm::vec3 color)
 float Airplane::checkTerrainCollision(Grid* grid, Transform collider)
 {
 
-	// pozycja szybowca (domyœlnie pozycja szybowca jest relatywna do pozycji terenu - teren ma swój pocz¹tek w punkcie (0,0) )
+	// pozycja szybowca (domyï¿½lnie pozycja szybowca jest relatywna do pozycji terenu - teren ma swï¿½j poczï¿½tek w punkcie (0,0) )
 	float posX = collider.Position.x;
 	float posZ = collider.Position.z;
 
 	// rozmiar pojedynczego kwadratu grida
 	float gridSquareSize = grid->Width * grid->WorldScale / (grid->Width - 1);
 
-	// dla danych posX, posZ znajdz odpowiadaj¹cy im kwadrat na gridzie
+	// dla danych posX, posZ znajdz odpowiadajï¿½cy im kwadrat na gridzie
 	int gridX = (int)std::floor(posX / gridSquareSize);
 	int gridZ = (int)std::floor(posZ / gridSquareSize);
 
@@ -405,7 +405,7 @@ float Airplane::checkTerrainCollision(Grid* grid, Transform collider)
 
 
 
-	// znaj¹c pozycjê na kwadracie, ustal który to trójk¹t:
+	// znajï¿½c pozycjï¿½ na kwadracie, ustal ktï¿½ry to trï¿½jkï¿½t:
 	float height;
 	glm::vec3 bottomLeft;
 	glm::vec3 topLeft;
@@ -416,7 +416,7 @@ float Airplane::checkTerrainCollision(Grid* grid, Transform collider)
 	if (xCoord > 1 - zCoord)
 	{
 		// top left triangle - wspolrzedne: (0,0) (0,1), (1,1)
-		// barycentric dla wierzcholkow top left trójk¹ta
+		// barycentric dla wierzcholkow top left trï¿½jkï¿½ta
 		
 		bottomLeft = grid->GetGridVertex(bottomLeftIndex).Pos;
 		topLeft = grid->GetGridVertex(topLeftIndex).Pos;
@@ -432,7 +432,7 @@ float Airplane::checkTerrainCollision(Grid* grid, Transform collider)
 	else
 	{
 		// diagonal or bottom right triangle - wspolrzedne: (0,0) (1,1), (1,0)
-		// barycentric dla wierzcholkow bottom right trójk¹ta
+		// barycentric dla wierzcholkow bottom right trï¿½jkï¿½ta
 
 		bottomLeft = grid->GetGridVertex(bottomLeftIndex).Pos;
 		topRight = grid->GetGridVertex(topRightIndex).Pos;

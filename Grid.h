@@ -36,7 +36,7 @@ struct GridVertex {
 	void InitVertex(int x, int y, int z, int Width, int Depth, float worldScale);
 };
 
-// definiuje siatkê terenu o wymiarach [ Width X Depth ] oraz wysokoœci dla ka¿dego punktu danej wartoœci¹ tablicy pGrid[Width][Depth] 
+// definiuje siatkï¿½ terenu o wymiarach [ Width X Depth ] oraz wysokoï¿½ci dla kaï¿½dego punktu danej wartoï¿½ciï¿½ tablicy pGrid[Width][Depth] 
 class Grid {
 
 public:
@@ -44,7 +44,7 @@ public:
 	// wymiary grida
 	int Width, Depth;
 	
-	// zakres wysokoœci
+	// zakres wysokoï¿½ci
 	float MinHeight, MaxHeight;
 
 	// do przeskalowania wspolrzednej Y
