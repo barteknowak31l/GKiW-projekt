@@ -17,7 +17,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-
+#include <cmath>
 #include <iostream>
 #include <algorithm>
 
@@ -110,6 +110,7 @@ Skull* skulls[numOfSkulls];
 // birds
 const int numOfBirds = 10;
 Bird* birds[numOfBirds];
+
 
 PointerLight *airPlaneLight;
 
@@ -278,7 +279,7 @@ void initModels()
 {
 	// create models
 	skull = new Model("models/skull/12140_Skull_v3_L2.obj");
-	bird_model = new Model("models/bird/12140_Bird_v3_L2.obj");
+	bird_model = new Model("models/bird/V25H37990MMNHK8FQT9AHQ4B5.obj");
 }
 void initTerrain()
 {
@@ -379,11 +380,11 @@ void initBirds()
 	float minXZ = -grid->Width * grid->WorldScale;
 	float maxXZ = grid->Width * grid->WorldScale;
 
-	float minY = startingPoint.y;
-	float maxY = minY + 10.0f;
+	float minY = startingPoint.y-250;
+	float maxY = minY + 150.0f;
 
-	float minScale = 1.0f;
-	float maxScale = 1.0f;
+	float minScale = 8.0f;
+	float maxScale = 9.0f;
 
 	float minRGB = 0.5f;
 	float maxRGB = 1.0f;
@@ -399,9 +400,8 @@ void initBirds()
 	float B = 0;
 
 
-
 	glm::vec3 pos = glm::vec3(0, 0, 0);
-	glm::vec3 scale = glm::vec3(6, 6, 6);
+	glm::vec3 scale = glm::vec3(0, 0, 0);
 	glm::vec3 rotation = glm::vec3(0, 0, 0);
 
 	for (int i = 0; i < numOfSkulls; i++)
@@ -419,13 +419,14 @@ void initBirds()
 
 		pos = glm::vec3(x, y, z) + startingPoint;
 		scale = glm::vec3(s, s, s);
-
-		birds[i] = new Bird("models/bird/12140_Bird_v3_L2.obj", pos, lightCubeShader);
+		stbi_set_flip_vertically_on_load(false);
+		birds[i] = new Bird("models/bird/V25H37990MMNHK8FQT9AHQ4B5.obj", pos, lightCubeShader);
+		stbi_set_flip_vertically_on_load(true);
 
 
 		birds[i]->light.light.position = pos + glm::vec3(lightOffset, lightOffset, 0.0f);
 		birds[i]->light.light.color = glm::vec3(R, G, B);
-		birds[i]->light.light.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
+		birds[i]->light.light.ambient = glm::vec3(0.5f, 0.5f, 0.5f);
 		birds[i]->light.light.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
 		birds[i]->light.light.specular = glm::vec3(1.0f, 1.0f, 1.0f);
 		birds[i]->light.light.constant = 1.0f;
@@ -616,11 +617,8 @@ void drawBirds(glm::mat4 projection, glm::mat4 view, Shader* shader)
 		model = glm::mat4(1.0f);
 
 		model = glm::translate(model, birds[i]->transform.Position); // translate it down so it's at the center of the scene
-		model = glm::rotate(model, birds[i]->transform.Pitch, glm::vec3(1.0f, 0.0f, 0.0f));
-		model = glm::rotate(model, birds[i]->transform.Yaw, glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, birds[i]->transform.Roll, glm::vec3(0.0f, 0.0f, 1.0f));
 		model = glm::scale(model, birds[i]->transform.scale);	// it's a bit too big for our scene, so scale it down
-		model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
 		shader->use();
 		shader->setMat4("model", model);
 		birds[i]->model->Draw(*shader);

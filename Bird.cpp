@@ -27,7 +27,6 @@ void Bird::setLightData(Shader* shader)
 void Bird::update(float deltaTime)
 {
     float rotFactor = 3.14f;
-    glm::vec3 translation = glm::vec3(deltaTime * birdSpeed, 0.0f, 0.0f);
-    transform.Move(translation);
+    transform.Move(glm::vec3(-deltaTime * birdSpeed, 0.0f, 0.0f));
 
 }
