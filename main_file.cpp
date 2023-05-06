@@ -108,7 +108,7 @@ const int numOfSkulls = 10;
 Skull* skulls[numOfSkulls];
 
 // birds
-const int numOfBirds = 10;
+const int numOfBirds = 12;
 Bird* birds[numOfBirds];
 
 
@@ -405,7 +405,7 @@ void initBirds()
 	glm::vec3 scale = glm::vec3(0, 0, 0);
 	glm::vec3 rotation = glm::vec3(0, 0, 0);
 
-	for (int i = 0; i < numOfSkulls; i++)
+	for (int i = 0; i < numOfBirds; i++)
 	{
 
 		x = minXZ + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxXZ - minXZ)));
@@ -620,8 +620,8 @@ void drawBirds(glm::mat4 projection, glm::mat4 view, Shader* shader)
 	{
 
 		model = glm::mat4(1.0f);
-		model = glm::rotate(model, birds[i]->transform.Yaw, birds[i]->transform.Up);
 		model = glm::translate(model, birds[i]->transform.Position); // translate it down so it's at the center of the scene
+		model = glm::rotate(model, birds[i]->transform.Yaw, birds[i]->transform.Up);
 		model = glm::scale(model, birds[i]->transform.scale);	// it's a bit too big for our scene, so scale it down
 
 		shader->use();
@@ -633,13 +633,18 @@ void drawBirds(glm::mat4 projection, glm::mat4 view, Shader* shader)
 	}
 
 
+
+
+
+
 }
 void drawAirplane(glm::mat4 projection, glm::mat4 view, Shader* shader)
 {
 
 	//airPlane->checkTerrainCollision(grid);
 	//printf("POZYCJA Y: %f\tWYSOKOSC TERENU: %f\n", airPlane->GetCollider(1).Position.y, airPlane->checkTerrainCollision(grid,airPlane->GetCollider(1)));
-	debugMessage("POZYCJA Y: " + std::to_string(airPlane->GetCollider(1).Position.y) + "\tWYSOKOSC TERENU: " + std::to_string(airPlane->checkTerrainCollision(grid, airPlane->GetCollider(1))));
+	//debugMessage("POZYCJA Y: " + std::to_string(airPlane->GetCollider(1).Position.y) + "\tWYSOKOSC TERENU: " + std::to_string(airPlane->checkTerrainCollision(grid, airPlane->GetCollider(1))));
+	//debugMessage("POZYCJA X: " + std::to_string(airPlane->transform.Position.x) + "\tPOZYCJA Y: " + std::to_string(airPlane->transform.Position.y));
 
 	// RENDER AIRPLANE MODEL
 	glm::mat4 model = glm::mat4(1.0f);
@@ -699,7 +704,7 @@ void drawScene(GLFWwindow* window)
 	modelShader->setMat4("projection", projection);
 	modelShader->setMat4("view", view);
 
-	drawSkulls(projection, view, modelShader);
+	//drawSkulls(projection, view, modelShader);
 	drawAirplane(projection, view, modelShader);
 	drawBirds(projection, view, modelShader);
 	drawSkybox(projection, view, cam);

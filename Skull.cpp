@@ -27,6 +27,6 @@ void Skull::update(float deltaTime)
 {
     float rotFactor = 3.14f;
     glm::vec3 rotation = glm::vec3(deltaTime ,0.0f , 0.0f);
-    transform.Move(rotation);
+    transform.Rotate(rotation);
 
 }

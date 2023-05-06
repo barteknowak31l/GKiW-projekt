@@ -6,6 +6,7 @@ void Bird::drawLight(glm::mat4 p, glm::mat4 v)
     lightShader->use();
     lightShader->setMat4("projection", p);
     lightShader->setMat4("view", v);
+    light.light.position = transform.Position + 3.0f*transform.Up;
     light.draw(*lightShader);
 }
 
