@@ -399,6 +399,7 @@ void initBirds()
 	float G = 0;
 	float B = 0;
 
+	float r = 0;
 
 	glm::vec3 pos = glm::vec3(0, 0, 0);
 	glm::vec3 scale = glm::vec3(0, 0, 0);
@@ -416,12 +417,15 @@ void initBirds()
 		G = minRGB + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxRGB - minRGB)));
 		B = minRGB + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxRGB - minRGB)));
 
-
+		r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / 360.0f));
+		
 		pos = glm::vec3(x, y, z) + startingPoint;
+		rotation = glm::vec3(0,glm::radians(r), 0);
 		scale = glm::vec3(s, s, s);
 		stbi_set_flip_vertically_on_load(false);
 		birds[i] = new Bird("models/bird/V25H37990MMNHK8FQT9AHQ4B5.obj", pos, lightCubeShader);
 		stbi_set_flip_vertically_on_load(true);
+		birds[i]->transform.SetRotation(rotation);
 
 
 		birds[i]->light.light.position = pos + glm::vec3(lightOffset, lightOffset, 0.0f);
@@ -464,12 +468,7 @@ void initLights()
 		light = &dirLight;
 		skulls[i]->model->setLightData(light);
 	}
-
-
 	light = &dirLight;
-	airPlane->model->setLightData(light);
-	airPlane->model->setLightData(pointLights, *lightCubeShader);
-
 	// for birds
 	for (int i = 0; i < numOfBirds; i++)
 	{
@@ -483,6 +482,12 @@ void initLights()
 		light = &dirLight;
 		birds[i]->model->setLightData(light);
 	}
+
+	light = &dirLight;
+	airPlane->model->setLightData(light);
+	airPlane->model->setLightData(pointLights, *lightCubeShader);
+
+	
 
 	// for testing only
 	airPlaneLight = new PointerLight(airPlane->transform.Position, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f),
@@ -615,7 +620,7 @@ void drawBirds(glm::mat4 projection, glm::mat4 view, Shader* shader)
 	{
 
 		model = glm::mat4(1.0f);
-
+		model = glm::rotate(model, birds[i]->transform.Yaw, birds[i]->transform.Up);
 		model = glm::translate(model, birds[i]->transform.Position); // translate it down so it's at the center of the scene
 		model = glm::scale(model, birds[i]->transform.scale);	// it's a bit too big for our scene, so scale it down
 
