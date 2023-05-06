@@ -10,6 +10,7 @@
 //				
 
 #define GLM_FORCE_RADIANS
+#define PI 3.14159265359
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -37,7 +38,7 @@
 // settings
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
-const float AIRPLANE_SPEED = 40.0f;
+const float AIRPLANE_SPEED = 400.0f;
 const bool FIRST_PERSON = false;	// FIRST PERSON AKTUALNIE NIE DZIALA
 const bool FREE_CAM = false;
 const bool FLIP_X_AXIS_ROTATION_MOVEMENT = false;
@@ -108,7 +109,7 @@ const int numOfSkulls = 10;
 Skull* skulls[numOfSkulls];
 
 // birds
-const int numOfBirds = 12;
+const int numOfBirds = 1;
 Bird* birds[numOfBirds];
 
 
@@ -381,7 +382,7 @@ void initBirds()
 	float maxXZ = grid->Width * grid->WorldScale;
 
 	float minY = startingPoint.y-250;
-	float maxY = minY + 150.0f;
+	float maxY = minY + 50.0f;
 
 	float minScale = 8.0f;
 	float maxScale = 9.0f;
@@ -606,6 +607,9 @@ void drawSkulls(glm::mat4 projection, glm::mat4 view, Shader* shader)
 
 
 }
+
+
+float angle = 0.0f;
 void drawBirds(glm::mat4 projection, glm::mat4 view, Shader* shader)
 {
 	// model matrix
@@ -621,7 +625,23 @@ void drawBirds(glm::mat4 projection, glm::mat4 view, Shader* shader)
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, birds[i]->transform.Position); // translate it down so it's at the center of the scene
-		model = glm::rotate(model, birds[i]->transform.Yaw, birds[i]->transform.Up);
+		
+				// obróć model, żeby przód zgadzał się z transform.Front
+		glm::vec3 x = glm::vec3(1.0, 0.0, 0.0);
+		float dot = glm::dot(x, birds[i]->transform.Front);
+		float l1 = glm::length(x);
+		float l2 = glm::length(birds[i]->transform.Front);
+		angle += glm::acos(dot / (l1 * l2));
+
+		float p = PI * (2.0);
+		angle = std::modf(angle, &p);
+
+		model = glm::rotate(model, angle, glm::vec3(0.0, 1.0, 0.0));
+
+		std::cout << angle << "\n";
+
+		//model = glm::rotate(model, birds[i]->transform.Yaw, birds[i]->transform.Up);
+		
 		model = glm::scale(model, birds[i]->transform.scale);	// it's a bit too big for our scene, so scale it down
 
 		shader->use();
@@ -629,6 +649,16 @@ void drawBirds(glm::mat4 projection, glm::mat4 view, Shader* shader)
 		birds[i]->model->Draw(*shader);
 
 		birds[i]->drawLight(projection, view);
+
+
+
+	// draw helper cube
+		lightCubeShader->use();
+		lightCubeShader->setMat4("projection", projection);
+		lightCubeShader->setMat4("view", view);
+
+		birds[i]->light.light.position = birds[i]->transform.Position + birds[i]->transform.Front * 3.0f;
+		birds[i]->light.draw(*lightCubeShader);
 
 	}
 
