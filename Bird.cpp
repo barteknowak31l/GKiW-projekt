@@ -29,7 +29,6 @@ void Bird::update(float deltaTime)
 {
     float rotFactor = 3.14f;
     transform.Move(transform.Front * deltaTime * birdSpeed);
-    transform.Rotate(glm::vec3(0.0, std::cos(deltaTime*15.0), std::sin(deltaTime * 15.0)));
-    //transform.SetPosition(glm::vec3(0));
+    transform.Rotate(glm::vec3(0.0, std::cos(deltaTime),std::cos(deltaTime)));
 
 }

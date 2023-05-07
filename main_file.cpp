@@ -6,6 +6,7 @@
 //				V - TOOGLE PRINT_DEBUG
 //				B - CLEAR CONSOLE WINDOW
 //				T - TOGGLE DAY/NIGHT CYCLE
+//				K - TOGGLE DRAW AIRPLANE MODEL
 //				ESC - EXIT
 //				
 
@@ -38,7 +39,7 @@
 // settings
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
-const float AIRPLANE_SPEED = 400.0f;
+const float AIRPLANE_SPEED = 40.0f;
 const bool FIRST_PERSON = false;	// FIRST PERSON AKTUALNIE NIE DZIALA
 const bool FREE_CAM = false;
 const bool FLIP_X_AXIS_ROTATION_MOVEMENT = false;
@@ -50,6 +51,7 @@ bool DAY_NIGHT_CYCLE = false;
 const float DAY_NIGHT_CYCLE_SPEED = 0.05f;
 bool ENABLE_AIRPLANE_FLASHLIGHT = true;
 bool DRAW_COLLIDERS = true;
+bool DRAW_AIRPLANE_MODEL = true;
 
 bool PRINT_DEBUG_INFO = true;
 
@@ -109,7 +111,7 @@ const int numOfSkulls = 10;
 Skull* skulls[numOfSkulls];
 
 // birds
-const int numOfBirds = 1;
+const int numOfBirds = 12;
 Bird* birds[numOfBirds];
 
 
@@ -378,8 +380,8 @@ void initBirds()
 
 	// initialize skulls with random position and scale
 
-	float minXZ = -grid->Width * grid->WorldScale;
-	float maxXZ = grid->Width * grid->WorldScale;
+	float minXZ = -grid->Width * grid->WorldScale ;
+	float maxXZ = grid->Width * grid->WorldScale ;
 
 	float minY = startingPoint.y-250;
 	float maxY = minY + 50.0f;
@@ -609,7 +611,6 @@ void drawSkulls(glm::mat4 projection, glm::mat4 view, Shader* shader)
 }
 
 
-float angle = 0.0f;
 void drawBirds(glm::mat4 projection, glm::mat4 view, Shader* shader)
 {
 	// model matrix
@@ -625,23 +626,10 @@ void drawBirds(glm::mat4 projection, glm::mat4 view, Shader* shader)
 
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, birds[i]->transform.Position); // translate it down so it's at the center of the scene
-		
-				// obróć model, żeby przód zgadzał się z transform.Front
-		glm::vec3 x = glm::vec3(1.0, 0.0, 0.0);
-		float dot = glm::dot(x, birds[i]->transform.Front);
-		float l1 = glm::length(x);
-		float l2 = glm::length(birds[i]->transform.Front);
-		angle += glm::acos(dot / (l1 * l2));
 
-		float p = PI * (2.0);
-		angle = std::modf(angle, &p);
+		model = birds[i]->transform.rotateToFrontMatrix(model);
+		model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0, 1.0, 0.0));
 
-		model = glm::rotate(model, angle, glm::vec3(0.0, 1.0, 0.0));
-
-		std::cout << angle << "\n";
-
-		//model = glm::rotate(model, birds[i]->transform.Yaw, birds[i]->transform.Up);
-		
 		model = glm::scale(model, birds[i]->transform.scale);	// it's a bit too big for our scene, so scale it down
 
 		shader->use();
@@ -650,15 +638,7 @@ void drawBirds(glm::mat4 projection, glm::mat4 view, Shader* shader)
 
 		birds[i]->drawLight(projection, view);
 
-
-
-	// draw helper cube
-		lightCubeShader->use();
-		lightCubeShader->setMat4("projection", projection);
-		lightCubeShader->setMat4("view", view);
-
-		birds[i]->light.light.position = birds[i]->transform.Position + birds[i]->transform.Front * 3.0f;
-		birds[i]->light.draw(*lightCubeShader);
+		birds[i]->transform.draw(*lightCubeShader,4.0f);
 
 	}
 
@@ -735,7 +715,10 @@ void drawScene(GLFWwindow* window)
 	modelShader->setMat4("view", view);
 
 	//drawSkulls(projection, view, modelShader);
+
+	if(DRAW_AIRPLANE_MODEL)
 	drawAirplane(projection, view, modelShader);
+	
 	drawBirds(projection, view, modelShader);
 	drawSkybox(projection, view, cam);
 
@@ -885,6 +868,13 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	{
 		DAY_NIGHT_CYCLE = !DAY_NIGHT_CYCLE;
 	}
+
+	// toggle DRAW_AIRPLANE_MODEL
+	if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+	{
+		DRAW_AIRPLANE_MODEL = !DRAW_AIRPLANE_MODEL;
+	}
+
 
 	// clear console
 	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)

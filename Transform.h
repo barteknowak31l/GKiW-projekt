@@ -5,10 +5,13 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/euler_angles.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+
+#include "Shader.h"
 
 
 // This class represents local coordinate system of an object
@@ -68,7 +71,10 @@ public:
         EulerAngles.y = Yaw;
         EulerAngles.z = Roll;
 
+        swapY = false;
+
         updateVectors();
+        setup();
     }
 
     // sets current position of transform
@@ -104,6 +110,8 @@ public:
         Yaw = rotation.y;
         Roll = rotation.z;
 
+        constrainAngles();
+
         EulerAngles.x = Pitch;
         EulerAngles.y = Yaw;
         EulerAngles.z = Roll;
@@ -118,6 +126,8 @@ public:
         Yaw = yaw;
         Roll = roll;
 
+        constrainAngles();
+
         EulerAngles.x = Pitch;
         EulerAngles.y = Yaw;
         EulerAngles.z = Roll;
@@ -131,6 +141,10 @@ public:
         Pitch += rotation.x;
         Yaw += rotation.y;
         Roll += rotation.z;
+
+
+        constrainAngles();
+
 
         EulerAngles.x = Pitch;
         EulerAngles.y = Yaw;
@@ -159,7 +173,155 @@ public:
     }
 
 
+    void draw(Shader& shader, float scale)
+    {
+        shader.use();
+        glBindVertexArray(VAO);
+
+
+        //middle - white
+        glm::mat4 middle = glm::mat4(1.0f);
+        middle = glm::translate(middle, Position);
+        middle = glm::rotate(middle, -glm::radians(Yaw), glm::vec3(0.0, 1.0, 0.0));
+        middle = glm::rotate(middle, glm::radians(Pitch), glm::vec3(0.0, 0.0, 1.0));
+        middle = glm::rotate(middle, glm::radians(Roll), glm::vec3(1.0, 0.0, 0.0));
+        middle = glm::scale(middle, glm::vec3(0.5) * scale);
+        shader.setMat4("model", middle);
+        shader.setVec3("color", glm::vec3(1.0, 1.0, 1.0));
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // FRONT - RED
+        glm::mat4 front = glm::mat4(1.0f);
+        front = glm::translate(front, Position + Front * scale);
+        front = rotateToFrontMatrix(front);
+        front = glm::scale(front, glm::vec3(glm::length(Front) * scale * 2.0f ,0.5f ,0.5f));
+        shader.setMat4("model", front);
+        shader.setVec3("color", glm::vec3(1.0,0.0,0.0));
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+        ////////// RIGHT - GREEN
+        glm::mat4 right = glm::mat4(1.0f);;
+        right = glm::translate(right, Position + Right * scale);
+        right = rotateToRightMatrix(right);
+        right = glm::scale(right, glm::vec3(glm::length(Right) * scale * 2.0f, 0.5f, 0.5f));
+        shader.setMat4("model", right);
+        shader.setVec3("color", glm::vec3(0.0, 1.0, 0.0));
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+        //////////// UP - BLUE
+        glm::mat4 up = glm::mat4(1.0f);;
+        up = glm::translate(up,Position + Up * scale);
+        up = rotateToUpMatrix(up);
+        up = glm::scale(up, glm::vec3(0.5f, glm::length(Up) * scale * 2.0f, 0.5f));
+        shader.setMat4("model", up);
+        shader.setVec3("color", glm::vec3(0.0, 0.0, 1.0));
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        
+        glBindVertexArray(0);
+    }
+
+
+    glm::mat4 rotateToFrontMatrix(glm::mat4 &model)
+    {
+        model = glm::rotate(model, -glm::radians(Yaw), glm::vec3(0.0, 1.0, 0.0));
+        model = glm::rotate(model, glm::radians(Pitch), glm::vec3(0.0, 0.0, 1.0));
+        model = glm::rotate(model, glm::radians(Roll), glm::vec3(1.0, 0.0, 0.0));
+        return model;
+    }
+
+
+    glm::mat4 rotateToRightMatrix(glm::mat4& model)
+    {
+        model = glm::rotate(model, -glm::radians(Yaw + 90.0f), glm::vec3(0.0, 1.0, 0.0));
+        model = glm::rotate(model, glm::radians(Pitch), glm::vec3(1.0, 0.0, 0.0));
+        model = glm::rotate(model, -glm::radians(Roll), glm::vec3(0.0, 0.0, 1.0));
+
+        return model;
+    }
+
+    glm::mat4 rotateToUpMatrix(glm::mat4& model)
+    {
+        model = glm::rotate(model, -glm::radians(Yaw), glm::vec3(0.0, 1.0, 0.0));
+        model = glm::rotate(model, glm::radians(Pitch), glm::vec3(0.0, 0.0, 1.0));
+        model = glm::rotate(model, glm::radians(Roll), glm::vec3(1.0, 0.0, 0.0));
+
+        return model;
+    }
+
+protected:
+    // vertex data to represent a cube
+    float cube[288] = {
+        // positions
+        -0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+
+        -0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
+
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+
+        -0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f, -0.5f,
+         0.5f, -0.5f,  0.5f,
+         0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f,  0.5f,
+        -0.5f, -0.5f, -0.5f,
+
+        -0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f, -0.5f,
+         0.5f,  0.5f,  0.5f,
+         0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f
+    };
+
 private:
+
+    // used for drawing
+    unsigned int VAO, VBO;
+    bool swapY;
+
+    //set VAO, VBO
+    void setup()
+    {
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+
+        glBindVertexArray(VAO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+        glBufferData(GL_ARRAY_BUFFER, sizeof(cube), cube, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        //unbind buffers
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+    }
 
     // calculate local axes with current Euler angles
     void updateVectors()
@@ -170,16 +332,57 @@ private:
         front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
         front.y = sin(glm::radians(Pitch));
         front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+
         Front = glm::normalize(front);
         // also re-calculate the Right and Up vector
         Right = glm::normalize(glm::cross(Front, WorldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
         Up = glm::normalize(glm::cross(Right, Front));
+
 
         //include Roll - rotation around Front axis -- needs to be tested with drawLine functionality
         glm::mat4 roll_mat = glm::rotate(glm::mat4(1.0f), glm::radians(Roll), Front);
         Up =  glm::normalize(glm::mat3(roll_mat) * Up);
         Right = glm::normalize(glm::cross(Front, Up));
 
+
+        swapY = (Pitch > 90.0f && Pitch < 270.0f) || (Pitch < -90.0f && Pitch > -270.0f);
+
+        if (swapY)
+        {
+            Right *= -1.0f;
+            Up *= -1.0f;
+        }
+
+
+    }
+
+
+    void constrainAngles()
+    {
+        if (Pitch > 0.0f)
+        {
+            Pitch = std::fmod(Pitch, 360.0f);
+        }
+        else
+        {
+            Pitch = std::fmod(Pitch, -360.0f);
+        }
+        if (Yaw > 0.0f)
+        {
+            Yaw = std::fmod(Yaw, 360.0f);
+        }
+        else
+        {
+            Yaw = std::fmod(Yaw, -360.0f);
+        }
+        if (Roll > 0.0f)
+        {
+            Roll = std::fmod(Roll, 360.0f);
+        }
+        else
+        {
+            Roll = std::fmod(Roll, -360.0f);
+        }
     }
 
 
