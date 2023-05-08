@@ -43,8 +43,8 @@ struct Spotlight{
     float quadratic;
 
 };
-uniform Spotlight light1;
-uniform Spotlight light2;
+uniform Spotlight spotLight1;
+uniform Spotlight spotLight2;
 uniform bool enableAirplaneFlashLight;
 
 // prototypes
@@ -67,7 +67,7 @@ void main()
 
     if(enableAirplaneFlashLight)
     {
-    	FragColor =  Diffuse * vec4(lightColor,1.0) * texture + texture * vec4(calcSpotLight(light1),1.0) + texture *vec4(calcSpotLight(light2),1.0);
+    	FragColor =  Diffuse * vec4(lightColor,1.0) * texture + texture * vec4(calcSpotLight(spotLight1),1.0) + texture *vec4(calcSpotLight(spotLight2),1.0);
     }
     else{
     	FragColor =  Diffuse * vec4(lightColor,1.0) * texture;

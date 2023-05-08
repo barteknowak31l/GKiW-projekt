@@ -359,15 +359,15 @@ void Airplane::setupFlashlights(glm::vec3 color)
 	leftFlashlight.cutOff = glm::cos(glm::radians(6.5f));
 	leftFlashlight.outerCutOff = glm::cos(glm::radians(10.5f));
 	leftFlashlight.constant = 1.0f;
-	leftFlashlight.linear = 0.007f;
-	leftFlashlight.quadratic = 0.0002f;
+	leftFlashlight.linear = 0.022f;
+	leftFlashlight.quadratic = 0.0019f;
 
 	rightFlashlight.color = color;
 	rightFlashlight.cutOff = glm::cos(glm::radians(6.5f));
 	rightFlashlight.outerCutOff = glm::cos(glm::radians(10.5f));
 	rightFlashlight.constant = 1.0f;
-	rightFlashlight.linear = 0.007f;
-	rightFlashlight.quadratic = 0.0002f;
+	rightFlashlight.linear = 0.022f;
+	rightFlashlight.quadratic = 0.0019f;
 
 }
 

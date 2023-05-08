@@ -26,7 +26,7 @@
 #include "Model.h"
 #include "Shader.h"
 #include "Camera.h"
-#include "Airplane.h"
+#include "airPlane.h"
 #include "Skull.h"
 #include "Grid.h"
 #include "Bird.h"
@@ -48,7 +48,7 @@ const float AIRPLANE_SCALE = 0.001f;
 const float FOV = 45.0f;
 const bool ENABLE_ANISOTROPY = true;
 bool DAY_NIGHT_CYCLE = false;
-const float DAY_NIGHT_CYCLE_SPEED = 0.05f;
+const float DAY_NIGHT_CYCLE_SPEED = 0.25f;
 bool ENABLE_AIRPLANE_FLASHLIGHT = true;
 bool DRAW_COLLIDERS = true;
 bool DRAW_AIRPLANE_MODEL = true;
@@ -148,6 +148,7 @@ void initBirds();
 void initSkybox();
 void update(float deltaTime);
 void debugMessage(std::string msg);
+void airPlaneLightToShaderData(Shader& shader);
 
 unsigned int skyboxVAO, skyboxVBO;
 unsigned int cubemapTexture;
@@ -526,6 +527,7 @@ void drawSkybox(glm::mat4 projection, glm::mat4 view, Camera* camera) {
 	view = glm::mat4(glm::mat3(camera->GetViewMatrix())); // remove translation from the view matrix
 	skyboxShader->setMat4("view", view);
 	skyboxShader->setMat4("projection", projection);
+	skyboxShader->setVec3("color", dirLight.light.color);
 	// skybox cube
 	glBindVertexArray(skyboxVAO);
 	glActiveTexture(GL_TEXTURE0);
@@ -554,25 +556,25 @@ void drawTerrain(glm::mat4 projection, glm::mat4 view, Shader* shader)
 
 	//airplane light
 
+	airPlaneLightToShaderData(*shader);
+	//shader->setBool("enableAirplaneFlashLight", ENABLE_AIRPLANE_FLASHLIGHT);
+	//shader->setVec3("light1.position", airPlane->leftFlashlight.position);
+	//shader->setVec3("light1.direction", airPlane->leftFlashlight.direction);
+	//shader->setFloat("light1.cutOff", airPlane->leftFlashlight.cutOff);
+	//shader->setFloat("light1.outerCutOff", airPlane->leftFlashlight.outerCutOff);
+	//shader->setVec3("light1.color", airPlane->leftFlashlight.color);
+	//shader->setFloat("light1.constant", airPlane->leftFlashlight.constant);
+	//shader->setFloat("light1.linear", airPlane->leftFlashlight.linear);
+	//shader->setFloat("light1.quadratic", airPlane->leftFlashlight.quadratic);
 
-	shader->setBool("enableAirplaneFlashLight", ENABLE_AIRPLANE_FLASHLIGHT);
-	shader->setVec3("light1.position", airPlane->leftFlashlight.position);
-	shader->setVec3("light1.direction", airPlane->leftFlashlight.direction);
-	shader->setFloat("light1.cutOff", airPlane->leftFlashlight.cutOff);
-	shader->setFloat("light1.outerCutOff", airPlane->leftFlashlight.outerCutOff);
-	shader->setVec3("light1.color", airPlane->leftFlashlight.color);
-	shader->setFloat("light1.constant", airPlane->leftFlashlight.constant);
-	shader->setFloat("light1.linear", airPlane->leftFlashlight.linear);
-	shader->setFloat("light1.quadratic", airPlane->leftFlashlight.quadratic);
-
-	shader->setVec3("light2.position", airPlane->rightFlashlight.position);
-	shader->setVec3("light2.direction", airPlane->rightFlashlight.direction);
-	shader->setFloat("light2.cutOff", airPlane->rightFlashlight.cutOff);
-	shader->setFloat("light2.outerCutOff", airPlane->rightFlashlight.outerCutOff);
-	shader->setVec3("light2.color", airPlane->rightFlashlight.color);
-	shader->setFloat("light2.constant", airPlane->rightFlashlight.constant);
-	shader->setFloat("light2.linear", airPlane->rightFlashlight.linear);
-	shader->setFloat("light2.quadratic", airPlane->rightFlashlight.quadratic);
+	//shader->setVec3("light2.position", airPlane->rightFlashlight.position);
+	//shader->setVec3("light2.direction", airPlane->rightFlashlight.direction);
+	//shader->setFloat("light2.cutOff", airPlane->rightFlashlight.cutOff);
+	//shader->setFloat("light2.outerCutOff", airPlane->rightFlashlight.outerCutOff);
+	//shader->setVec3("light2.color", airPlane->rightFlashlight.color);
+	//shader->setFloat("light2.constant", airPlane->rightFlashlight.constant);
+	//shader->setFloat("light2.linear", airPlane->rightFlashlight.linear);
+	//shader->setFloat("light2.quadratic", airPlane->rightFlashlight.quadratic);
 
 
 	grid->Draw(*shader);
@@ -620,6 +622,7 @@ void drawBirds(glm::mat4 projection, glm::mat4 view, Shader* shader)
 	shader->use();
 	shader->setMat4("projection", projection);
 	shader->setMat4("view", view);
+	airPlaneLightToShaderData(*shader);
 
 	for (int i = 0; i < numOfBirds; i++)
 	{
@@ -864,7 +867,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 
 	// toggle day/night cycle
-	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
 	{
 		DAY_NIGHT_CYCLE = !DAY_NIGHT_CYCLE;
 	}
@@ -1067,4 +1070,29 @@ void debugMessage(std::string msg)
 		return;
 
 	std::cout << " --" << msg << "\n";
+}
+
+
+void airPlaneLightToShaderData(Shader& shader)
+{
+	shader.use();
+
+	shader.setBool("enableAirplaneFlashLight", ENABLE_AIRPLANE_FLASHLIGHT);
+	shader.setVec3("spotLight1.position", airPlane->leftFlashlight.position);
+	shader.setVec3("spotLight1.direction", airPlane->leftFlashlight.direction);
+	shader.setFloat("spotLight1.cutOff", airPlane->leftFlashlight.cutOff);
+	shader.setFloat("spotLight1.outerCutOff", airPlane->leftFlashlight.outerCutOff);
+	shader.setVec3("spotLight1.color", airPlane->leftFlashlight.color);
+	shader.setFloat("spotLight1.constant", airPlane->leftFlashlight.constant);
+	shader.setFloat("spotLight1.linear", airPlane->leftFlashlight.linear);
+	shader.setFloat("spotLight1.quadratic", airPlane->leftFlashlight.quadratic);
+
+	shader.setVec3("spotLight2.position", airPlane->rightFlashlight.position);
+	shader.setVec3("spotLight2.direction", airPlane->rightFlashlight.direction);
+	shader.setFloat("spotLight2.cutOff", airPlane->rightFlashlight.cutOff);
+	shader.setFloat("spotLight2.outerCutOff", airPlane->rightFlashlight.outerCutOff);
+	shader.setVec3("spotLight2.color", airPlane->rightFlashlight.color);
+	shader.setFloat("spotLight2.constant", airPlane->rightFlashlight.constant);
+	shader.setFloat("spotLight2.linear", airPlane->rightFlashlight.linear);
+	shader.setFloat("spotLight2.quadratic", airPlane->rightFlashlight.quadratic);
 }

@@ -33,6 +33,26 @@ struct PointLight {
     vec3 specular;
 }; 
 
+
+// spotlight
+struct Spotlight{
+    vec3 position;
+    vec3 direction;
+    vec3 color;
+    float cutOff;
+    float outerCutOff;
+
+    //attenaution
+    float constant;
+    float linear;
+    float quadratic;
+
+};
+uniform Spotlight spotLight1;
+uniform Spotlight spotLight2;
+uniform bool enableAirplaneFlashLight;
+
+
 in vec3 Normal; 
 in vec3 FragPos;
 in vec2 TexCoords;
@@ -53,6 +73,7 @@ uniform Material material;
 //function prototypes
 vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir, sampler2D texDiff, sampler2D texSpec); 
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, sampler2D texDiff, sampler2D texSpec);
+vec3 calcSpotLight(Spotlight l);
 
 //front vector of camera
 uniform vec3 viewPos;
@@ -75,6 +96,12 @@ void main()
         {
             for(int i = 0; i < numOfPointLights; i++)
             result += CalcPointLight(pointLights[i], norm, FragPos, viewDir, texture_diffuse1, texture_specular1);    
+        }
+
+        if(enableAirplaneFlashLight)
+        {
+            result +=calcSpotLight(spotLight1);
+            result +=calcSpotLight(spotLight2);
         }
 
     
@@ -136,3 +163,21 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, s
 
     return (ambient + diffuse + specular);
 } 
+
+
+vec3 calcSpotLight(Spotlight l)
+{
+    vec3 lightDirection = normalize(l.position - FragPos);
+    
+    float theta = dot(lightDirection, normalize(-l.direction));
+    float epsilon   = l.cutOff - l.outerCutOff;
+    float intensity = clamp((theta - l.outerCutOff) / epsilon, 0.0, 1.0); 
+    
+    float distance    = length(l.position - FragPos);
+    float attenuation = 1.0 / (l.constant + l.linear * distance + 
+    		    l.quadratic * (distance * distance)); 
+
+
+        return l.color * intensity * attenuation;
+
+}
