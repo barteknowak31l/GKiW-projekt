@@ -14,7 +14,7 @@ public:
     PointerLight light;
     Shader* lightShader;
 
-    Bird(const char* path, glm::vec3 pos, Shader* ls) : GameObject(path, pos) { lightShader = ls; };
+    Bird(const char* path, glm::vec3 pos, Shader* ls, glm::vec3 colSize) : GameObject(path, pos,colSize) { lightShader = ls; };
     ~Bird() { ; };
 
     void update(float deltaTime);
@@ -22,6 +22,9 @@ public:
     void drawLight(glm::mat4 p, glm::mat4 v);
 
     void setLightData(Shader* shader);
+
+
+    void onCollision(BoxCollider3D& c) { GameObject::defaultOnCollision(c); }
 
 };
 

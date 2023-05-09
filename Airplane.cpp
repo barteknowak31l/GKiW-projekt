@@ -3,7 +3,9 @@
 #include <algorithm>
 #include "Grid.h"
 
-Airplane::Airplane(std::string path,glm::vec3 pos, Grid* _grid, float spd, glm::vec3 scale, glm::vec3 flashlightColor, float _flashlightOffset) :GameObject(path, pos)
+extern float deltaTime;
+
+Airplane::Airplane(std::string path,glm::vec3 pos, Grid* _grid, float spd, glm::vec3 scale, glm::vec3 flashlightColor, float _flashlightOffset, glm::vec3 colSize) :GameObject(path, pos,colSize)
 {
 	transform.setScale(scale);
 	speed = spd;
@@ -18,7 +20,7 @@ Airplane::Airplane(std::string path,glm::vec3 pos, Grid* _grid, float spd, glm::
 	reset();
 }
 
-Airplane::Airplane(std::string path, Camera* _camera, glm::vec3 pos, Grid* _grid, float spd, bool fp, bool _flipPitch, glm::vec3 scale, glm::vec3 flashlightColor, float _flashlightOffset):GameObject(path,pos)
+Airplane::Airplane(std::string path, Camera* _camera, glm::vec3 pos, Grid* _grid, float spd, bool fp, bool _flipPitch, glm::vec3 scale, glm::vec3 flashlightColor, float _flashlightOffset, glm::vec3 colSize): GameObject(path,pos,colSize)
 {
 	transform.setScale(scale);
 	camera = _camera;
@@ -484,4 +486,15 @@ Transform Airplane::GetCollider(int index)
 	}
 	else
 		return Transform(glm::vec3(0),glm::vec3(0),0,0,0);
+}
+void Airplane::onCollision(BoxCollider3D& c)
+{
+
+	// PUSHING A BIRD
+	glm::vec3 newBirdPos = glm::lerp(c.transform->Position, c.transform->Position + transform.Front, deltaTime);
+	c.transform->SetPosition(newBirdPos);
+
+	// REVERSE LAST MOVEMENT
+	processMovement(M_BACKWARD, deltaTime);
+
 }

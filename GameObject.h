@@ -9,6 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "Transform.h"
 #include "Model.h"
+#include "BoxCollider3D.h"
 
 #include <vector>
 #include <algorithm>
@@ -24,13 +25,15 @@ class GameObject
 public:
 	Transform transform;
 	Model* model;
+	BoxCollider3D boxCollider3D;
 	
 	GameObject() { ; };
-	GameObject(std::string path, glm::vec3 pos);
+	GameObject(std::string path, glm::vec3 pos, glm::vec3 colliderSize);
 	~GameObject();
 
 	virtual void update(float deltaTime) = 0;
 	virtual void reset() = 0;
+	virtual void onCollision(BoxCollider3D&) = 0;
 
 
 	static void UpdateGameObjects(float deltaTime);
@@ -52,6 +55,15 @@ protected:
 	{
 		return;
 	}
+
+	void defaultOnCollision(BoxCollider3D& c)
+	{
+		return;
+	}
+
+private:
+	static void checkCollisions(GameObject*);
+
 };
 
 

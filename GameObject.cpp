@@ -4,11 +4,16 @@
 std::vector<GameObject*> GameObject::gameObjects;
 #endif
 
-GameObject::GameObject(std::string path, glm::vec3 pos)
+GameObject::GameObject(std::string path, glm::vec3 pos, glm::vec3 colliderSize)
 {
 	gameObjects.push_back(this);
 
 	transform.Position = pos;
+
+	boxCollider3D.point = pos;
+	boxCollider3D.size = colliderSize;
+	boxCollider3D.transform = &transform;
+
 	model = new Model(path);
 }
 GameObject::~GameObject()
@@ -35,7 +40,26 @@ void GameObject::UpdateGameObjects(float deltaTime)
 
 	for (i; i < gameObjects.end(); i++)
 	{
+		(*i)->boxCollider3D.point = (*i)->transform.Position;
+		checkCollisions(*i);
 		(*i)->update(deltaTime);
+	}
+}
+
+void GameObject::checkCollisions(GameObject* g)
+{
+	std::vector<GameObject*>::iterator i = gameObjects.begin();
+
+	for (i; i < gameObjects.end(); i++)
+	{
+		if (*i == g) continue;
+
+		if (g->boxCollider3D.collision((*i)->boxCollider3D))
+		{
+			g->onCollision((*i)->boxCollider3D);
+		}
+
+
 	}
 }
 

@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="Airplane.cpp" />
     <ClCompile Include="Bird.cpp" />
+    <ClCompile Include="BoxCollider3D.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="main_file.cpp" />
@@ -32,6 +33,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Airplane.h" />
+    <ClInclude Include="BoxCollider3D.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DirectionalLight.h" />
     <ClInclude Include="GameObject.h" />

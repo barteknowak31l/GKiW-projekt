@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include <string>
 
 #include "Shader.h"
 
@@ -250,6 +251,15 @@ public:
 
         return model;
     }
+
+    std::string posToString()
+    {
+        std::string s = "X: " + std::to_string(Position.x) + "\tY: " + std::to_string(Position.y) + "\tZ: " + std::to_string(Position.z);
+
+        return s;
+    }
+
+
 
 protected:
     // vertex data to represent a cube

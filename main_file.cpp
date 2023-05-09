@@ -66,13 +66,20 @@ const float MAX_HEIGHT = 256.0f;
 const int FAULT_FORMATION_ITER = 500;
 const float SMOOTH_TERRAIN_FILTER = 0.5;
 
+
+// model collision settings
+const glm::vec3 airPlaneColliderSize = glm::vec3(6.0f,3.0f,6.0f);
+const glm::vec3 skullColliderSize = glm::vec3(12.0f, 12.0f, 12.0f);;
+const glm::vec3 birdColliderSize = glm::vec3(12.0f, 8.0f, 12.0f);
+
+
 // camera
 Camera* cam;
 
 
 // time 
 float currentFrame = 0.0f;
-float deltaTime = 0.0f;	// Time between current frame and last frame
+extern float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
 
@@ -232,7 +239,7 @@ void init(GLFWwindow* window)
 	debugMessage("creating Airplane object");
 	glm::vec3 scale = glm::vec3(AIRPLANE_SCALE, AIRPLANE_SCALE, AIRPLANE_SCALE);
 	airPlane = new Airplane("models/airplane/11804_Airplane_v2_l2.obj", cam, startingPoint,grid, AIRPLANE_SPEED, FIRST_PERSON,FLIP_X_AXIS_ROTATION_MOVEMENT,
-		scale, flashlightColor, flashlightOffset);
+		scale, flashlightColor, flashlightOffset,airPlaneColliderSize);
 
 	debugMessage("Airplane created");
 	//non player - to be tested
@@ -356,7 +363,7 @@ void initSkulls()
 		pos = glm::vec3(x, y, z) + startingPoint;
 		scale = glm::vec3(s, s, s);
 
-		skulls[i] = new Skull("models/skull/12140_Skull_v3_L2.obj", pos, lightCubeShader);
+		skulls[i] = new Skull("models/skull/12140_Skull_v3_L2.obj", pos, lightCubeShader,skullColliderSize);
 
 
 		skulls[i]->light.light.position = pos +glm::vec3(lightOffset,lightOffset,0.0f);
@@ -427,7 +434,7 @@ void initBirds()
 		rotation = glm::vec3(0,glm::radians(r), 0);
 		scale = glm::vec3(s, s, s);
 		stbi_set_flip_vertically_on_load(false);
-		birds[i] = new Bird("models/bird/V25H37990MMNHK8FQT9AHQ4B5.obj", pos, lightCubeShader);
+		birds[i] = new Bird("models/bird/V25H37990MMNHK8FQT9AHQ4B5.obj", pos, lightCubeShader,birdColliderSize);
 		stbi_set_flip_vertically_on_load(true);
 		birds[i]->transform.SetRotation(rotation);
 
@@ -732,6 +739,7 @@ void drawScene(GLFWwindow* window)
 void update(float deltaTime)
 {
 	GameObject::UpdateGameObjects(deltaTime);
+
 	
 	if (DAY_NIGHT_CYCLE)
 	{
