@@ -51,7 +51,7 @@ public:
 	Airplane(std::string path,glm::vec3 pos, Grid* grid, float spd, glm::vec3 scale, glm::vec3 flashlightColor, float flashlightOffset, glm::vec3 colSize);
 
 	// constructor with camera - this one is controlled by player
-	Airplane(std::string path, Camera* _camera, glm::vec3 pos, Grid* grid, float spd, bool fp, bool _flipPitch, glm::vec3 scale, glm::vec3 flashlightColor, float flashlightOffset, glm::vec3 colSize);
+	Airplane(std::string path, Camera* _camera, glm::vec3 pos, Grid* grid, float spd, bool _flipPitch, glm::vec3 scale, glm::vec3 flashlightColor, float flashlightOffset, glm::vec3 colSize);
 
 	~Airplane() { ; };
 
@@ -80,7 +80,7 @@ private:
 
 	// true if this object is controlled by playert
 	bool isPlayer;
-	bool firstPerson = false;
+
 
 	// flying speed
 	float speed;

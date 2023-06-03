@@ -20,17 +20,15 @@ Airplane::Airplane(std::string path,glm::vec3 pos, Grid* _grid, float spd, glm::
 	reset();
 }
 
-Airplane::Airplane(std::string path, Camera* _camera, glm::vec3 pos, Grid* _grid, float spd, bool fp, bool _flipPitch, glm::vec3 scale, glm::vec3 flashlightColor, float _flashlightOffset, glm::vec3 colSize): GameObject(path,pos,colSize)
+Airplane::Airplane(std::string path, Camera* _camera, glm::vec3 pos, Grid* _grid, float spd, bool _flipPitch, glm::vec3 scale, glm::vec3 flashlightColor, float _flashlightOffset, glm::vec3 colSize): GameObject(path,pos,colSize)
 {
 	transform.setScale(scale);
 	camera = _camera;
 	speed = spd;
 	grid = _grid;
-	firstPerson = fp;
-	if (fp)
-		cameraOffset = firstPersonCamOffset;
-	else
-		cameraOffset = thirdPersonCamOffset;
+
+
+	cameraOffset = thirdPersonCamOffset;
 
 
 	flipPitch = _flipPitch;
@@ -225,12 +223,7 @@ void Airplane::handleTurnAnimation(float deltaTime)
 			changeYaw = yawAnimation < 0;
 		}
 
-		// first person camera depends on yawAnimation, so update it too
-		if (firstPerson)
-		{
-			camera->setRotation(transform.Pitch, transform.Yaw, yawAnimation);
-			camera->parentPosition = camera->transform.Position + camera->transform.Front;
-		}
+
 
 	}
 	// to avoid floating point accuracy problems, when close to 0, just set it to 0
@@ -250,14 +243,6 @@ void Airplane::handleCamera()
 		if (camera->enableMovement)
 			return;
 
-		// turning camera together with airplane - gives effect of rolling head
-		if (firstPerson)
-		{
-			camera->setRotation(transform.Pitch, transform.Yaw, yawAnimation);
-			camera->parentPosition = camera->transform.Position + camera->transform.Front;
-		}
-		else // third person camera
-		{
 			// flip camera Up vector to avoid screen rotating while making barrel roll
 			if (transform.Pitch >= 90.0f && transform.Pitch <= 270.0f)
 			{
@@ -274,7 +259,7 @@ void Airplane::handleCamera()
 
 			// update camera LookAt 2nd argument - point to look at
 			camera->parentPosition = glm::vec3(transform.Position.x, transform.Position.y, transform.Position.z);
-		}
+
 
 		// update camera position
 		camera->SetPosition(transform.Position + cameraOffset.x * transform.Right + cameraOffset.y * transform.Up + cameraOffset.z * transform.Front);
@@ -300,17 +285,9 @@ void Airplane::reset()
 
 	if (isPlayer)
 	{
-		// adjust camera to follow the object
-		if (firstPerson)
-		{
-			camera->setRotation(transform.Pitch, transform.Yaw, yawAnimation);
-			camera->parentPosition = camera->transform.Position + camera->transform.Front;
-		}
-		else // third person
-		{
-			camera->parentPosition = glm::vec3(transform.Position.x, transform.Position.y, transform.Position.z);
-			camera->setRotation(PITCH, YAW, ROLL);
-		}
+
+		camera->parentPosition = glm::vec3(transform.Position.x, transform.Position.y, transform.Position.z);
+		camera->setRotation(PITCH, YAW, ROLL);
 
 		// set camera position
 		camera->SetPosition(transform.Position + cameraOffset.x * transform.Right + cameraOffset.y * transform.Up + cameraOffset.z * transform.Front);

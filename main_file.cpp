@@ -36,25 +36,23 @@
 #include "stb_image.h"
 
 
-// settings
+// render settings
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
-const float AIRPLANE_SPEED = 40.0f;
-const bool FIRST_PERSON = false;	// FIRST PERSON AKTUALNIE NIE DZIALA
-const bool FREE_CAM = false;
-const bool FLIP_X_AXIS_ROTATION_MOVEMENT = false;
-const float FP_CAM_Y_OFFSET = -0.0f;
-const float AIRPLANE_SCALE = 0.001f; 
-const float FOV = 45.0f;
 const bool ENABLE_ANISOTROPY = true;
-bool DAY_NIGHT_CYCLE = false;
-const float DAY_NIGHT_CYCLE_SPEED = 0.25f;
+
+// airplane settings
+const float AIRPLANE_SPEED = 40.0f;
+const bool FLIP_X_AXIS_ROTATION_MOVEMENT = false;
+const float AIRPLANE_SCALE = 0.001f;
 bool ENABLE_AIRPLANE_FLASHLIGHT = true;
 bool DRAW_COLLIDERS = true;
 bool DRAW_AIRPLANE_MODEL = true;
 
-bool PRINT_DEBUG_INFO = true;
-
+// camera settings
+const bool FIRST_PERSON = false;	// FIRST PERSON AKTUALNIE NIE DZIALA
+const bool FREE_CAM = false;
+const float FOV = 45.0f;
 
 // terrain settings
 const int WIDTH = 256;
@@ -68,9 +66,15 @@ const float SMOOTH_TERRAIN_FILTER = 0.5;
 
 
 // model collision settings
-const glm::vec3 airPlaneColliderSize = glm::vec3(6.0f,3.0f,6.0f);
+const glm::vec3 airPlaneColliderSize = glm::vec3(6.0f, 3.0f, 6.0f);
 const glm::vec3 skullColliderSize = glm::vec3(12.0f, 12.0f, 12.0f);;
 const glm::vec3 birdColliderSize = glm::vec3(12.0f, 8.0f, 12.0f);
+
+// misc settings
+bool DAY_NIGHT_CYCLE = false;
+const float DAY_NIGHT_CYCLE_SPEED = 0.25f;
+bool PRINT_DEBUG_INFO = true;
+
 
 
 // camera
@@ -89,9 +93,9 @@ glm::vec3 worldPos; // center of the grid/world
 
 
 // lighting
-Light* light;	//universal light pointer
+Light* light;	// any light pointer
 DirectionalLight dirLight;
-glm::vec3 dirLightDirecrion(0.2f, -1.0f, -0.3f);	// with implementation of day night cycle direction should not be static
+glm::vec3 dirLightDirecrion(0.2f, -1.0f, -0.3f);	
 vector<PointerLight> pointLights;
 
 // shaders
@@ -109,7 +113,8 @@ Model* bird_model;
 
 // objects
 Airplane* airPlane;
-glm::vec3 startingPoint;
+PointerLight* airPlaneLight;
+glm::vec3 startingPoint;	// starting point for an airplace
 glm::vec3 flashlightColor = glm::vec3(1.0f, 1.0f, 0.0f);
 float flashlightOffset = .5f;
 
@@ -122,12 +127,11 @@ const int numOfBirds = 12;
 Bird* birds[numOfBirds];
 
 
-PointerLight *airPlaneLight;
 
 // input
 bool input[6] = { false, false, false, false, false, false}; // is pressed?: w a s d UP DOWN
 // mouse input
-float lastX = SCR_WIDTH / 2.0f, lastY = SCR_HEIGHT / 2.0f;	//last cursor positon 
+float lastX = SCR_WIDTH / 2.0f, lastY = SCR_HEIGHT / 2.0f;	// last cursor positon 
 bool firstMouseInput = true;
 
 
@@ -148,7 +152,6 @@ void drawAirplane(glm::mat4 projection, glm::mat4 view, Shader* shader);
 void initLights();
 void initCamera();
 void initShaders();
-void initModels();
 void initTerrain();
 void initSkulls();
 void initBirds();
@@ -209,10 +212,6 @@ void init(GLFWwindow* window)
 	initShaders();
 	debugMessage("shaders initialized");
 
-	debugMessage("initializing models");
-	initModels();
-	debugMessage("models initialized");
-
 	debugMessage("initializing terrain");
 	initTerrain();
 	debugMessage("terrain initialized");
@@ -238,7 +237,7 @@ void init(GLFWwindow* window)
 	// create airPlane player object
 	debugMessage("creating Airplane object");
 	glm::vec3 scale = glm::vec3(AIRPLANE_SCALE, AIRPLANE_SCALE, AIRPLANE_SCALE);
-	airPlane = new Airplane("models/airplane/11804_Airplane_v2_l2.obj", cam, startingPoint,grid, AIRPLANE_SPEED, FIRST_PERSON,FLIP_X_AXIS_ROTATION_MOVEMENT,
+	airPlane = new Airplane("models/airplane/11804_Airplane_v2_l2.obj", cam, startingPoint,grid, AIRPLANE_SPEED,FLIP_X_AXIS_ROTATION_MOVEMENT,
 		scale, flashlightColor, flashlightOffset,airPlaneColliderSize);
 
 	debugMessage("Airplane created");
@@ -286,12 +285,7 @@ void initShaders()
 	terrainShader = new Shader("Shaders/terrain.vs", "Shaders/terrain.fs");
 	skyboxShader = new Shader("skybox.vs", "skybox.fs");
 }
-void initModels()
-{
-	// create models
-	skull = new Model("models/skull/12140_Skull_v3_L2.obj");
-	bird_model = new Model("models/bird/V25H37990MMNHK8FQT9AHQ4B5.obj");
-}
+
 void initTerrain()
 {
 	// create terrain
@@ -834,7 +828,7 @@ GLFWwindow* initOpenGL()
 		exit(EXIT_FAILURE);
 	}
 
-	debugMessage("OpenGl initialized, window [SIZE " + std::to_string(SCR_HEIGHT) + "x" + std::to_string(SCR_WIDTH) + "] created");
+	debugMessage("OpenGl initialized, window SIZE [" + std::to_string(SCR_WIDTH) + "x" + std::to_string(SCR_HEIGHT) + "] created");
 
 	return window;
 }

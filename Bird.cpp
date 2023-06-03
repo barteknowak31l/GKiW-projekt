@@ -28,7 +28,8 @@ void Bird::setLightData(Shader* shader)
 void Bird::update(float deltaTime)
 {
     float rotFactor = 3.14f;
-    transform.Move(transform.Front * deltaTime * birdSpeed);
-    transform.Rotate(glm::vec3(0.0, std::cos(deltaTime),std::cos(deltaTime)));
+    //transform.Move(transform.Front * deltaTime * birdSpeed);
+    //transform.Rotate(glm::vec3(0.0, std::cos(deltaTime),std::cos(deltaTime)));
+    //transform.Rotate(glm::vec3(0.0, std::cos(deltaTime),0.0));
 
 }
