@@ -353,12 +353,12 @@ void Airplane::setupFlashlights(glm::vec3 color)
 float Airplane::checkTerrainCollision(Grid* grid, Transform collider)
 {
 
-	// pozycja szybowca (domyslnie pozycja szybowca jest relatywna do pozycji terenu - teren ma swoj poczatek w punkcie (0,0) )
+	// pozycja colliderow szybowca
 	float posX = collider.Position.x;
 	float posZ = collider.Position.z;
 
 	// rozmiar pojedynczego kwadratu grida
-	float gridSquareSize = grid->Width * grid->WorldScale / (grid->Width - 1);
+	float gridSquareSize = grid->WorldScale;
 
 	// dla danych posX, posZ znajdz odpowiadajacy im kwadrat na gridzie
 	int gridX = (int)std::floor(posX / gridSquareSize);
@@ -371,9 +371,9 @@ float Airplane::checkTerrainCollision(Grid* grid, Transform collider)
 		return 0.0f;
 	}
 
-	// znajdz dokladna pozycje szybowca na wyznaczonym kwadracie:
+	// znajdz dokladna pozycje szybowca na wyznaczonym kwadracie: <0;1>
 	float xCoord = fModulo(posX,gridSquareSize) / gridSquareSize;
-	float zCoord = fModulo(posX, gridSquareSize) / gridSquareSize;
+	float zCoord = fModulo(posZ, gridSquareSize) / gridSquareSize;
 
 
 	// ustal indeksy wierzcholkow tego kwadratu (kompatybilne z wektorem wierzcholkow w grid)
@@ -392,7 +392,7 @@ float Airplane::checkTerrainCollision(Grid* grid, Transform collider)
 	glm::vec3 bottomRight;
 	glm::vec2 planePos;
 
-	if (xCoord > 1 - zCoord)
+	if (xCoord < zCoord)
 	{
 		// top left triangle - wspolrzedne: (0,0) (0,1), (1,1)
 		// barycentric dla wierzcholkow top left trojkata
