@@ -15,7 +15,6 @@ class Grid;
 
 // attached camera positions
 const glm::vec3 thirdPersonCamOffset = glm::vec3(0.0f, 0.0f, -4.0f);
-const glm::vec3 firstPersonCamOffset = glm::vec3(0.0f, -.2f, 0.5f);
 
 struct flashLight {
 	glm::vec3 position;
@@ -42,7 +41,7 @@ public:
 	flashLight rightFlashlight;
 	float flashlightOffset;
 
-	// used for animating rotation on Z axis during turn
+	// used for animating rotation on Z axis when turning
 	float yawAnimation = 0.0f;
 	
 	glm::vec3 resetPosition;
@@ -68,17 +67,17 @@ public:
 	glm::mat4 calcModelMatrix(glm::mat4 matrix);
 
 
-	float checkTerrainCollision(Grid* grid, Transform transform);
 
+	// collision detection
 	Transform GetCollider(int index);
-
+	float checkTerrainCollision(Grid* grid, Transform transform);
 	void onCollision(BoxCollider3D& c);
 
 
 private:
 
 
-	// true if this object is controlled by playert
+	// true if this object is controlled by player
 	bool isPlayer;
 
 
@@ -88,15 +87,17 @@ private:
 	// used for rotating transform when turning around
 	//
 	float yaw = 0.0f;
+	// controls the speed fo airplane rotation on Y axis - turning left and right
 	float yawDelta = 60.0f;
 	float yawMax = 360.0f;
 
 
 	// used for rotating when rising and diving
 	float pitch = 0.0f;
+	// flip rotation around X axis
 	bool flipPitch;
 
-	// used to animate rising and diving - used in model matrix rotation (currently in main() function) - todo - function to calculate Model matrix based on pitch/yaw/roll
+	// used to animate rising and diving - used in model matrix rotation 
 	//
 	// maximum angle of rotation when turning (animation only)
 	float yawAnimationMax = 30.0f;		
@@ -110,7 +111,7 @@ private:
 	bool changeYaw = false;
 	bool isRotatePressed = false;
 
-	// current offset (first/third person)
+	// current camera offset
 	glm::vec3 cameraOffset;
 
 	// collision checker
@@ -124,7 +125,7 @@ private:
 	float collider2Offset = 1.5f;
 
 
-	// sets variables associated with turning animation
+	// sets variables related to controling the turning animation
 	void handleTurnAnimation(float deltaTime);
 	
 	// sets rotation & position of the camera while moving
@@ -139,7 +140,7 @@ private:
 	float barycentricInterpolation(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec2 pos);
 
 
-	// calculate modulo for float
+	// calculate modulo of float
 	float fModulo(float x, float y);
 
 };

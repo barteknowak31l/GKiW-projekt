@@ -26,8 +26,6 @@ public:
     {
         type = DIRECTIONAL;
 
-        //light.direction = direction;
-        //light.color = color
         light.ambient = ambient;
         light.diffuse = diffuse;
         light.specular = specular;

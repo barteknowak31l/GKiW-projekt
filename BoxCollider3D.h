@@ -13,6 +13,8 @@ public:
 	BoxCollider3D() {};
 	BoxCollider3D(glm::vec3 p, float s) :point(p), size(s) {};
 
+
+	// check AABB vs AABB collision between two BoxCollider3D objects
 	bool collision(BoxCollider3D& other)
 	{
 

@@ -28,7 +28,7 @@ struct GridPoint {
 	}
 };
 
-// opisuje wierzcholki siatki // dane do shadera
+// opisuje wierzcholki siatki // dane przekazywane do shadera
 struct GridVertex {
 	glm::vec3 Pos;
 	glm::vec2 Tex;
@@ -36,7 +36,7 @@ struct GridVertex {
 	void InitVertex(int x, int y, int z, int Width, int Depth, float worldScale);
 };
 
-// definiuje siatk� terenu o wymiarach [ Width X Depth ] oraz wysoko�ci dla ka�dego punktu danej warto�ci� tablicy pGrid[Width][Depth] 
+// definiuje siatke terenu o wymiarach [ Width X Depth ] oraz wysokosci dla kazdego punktu danej wartosci tablicy pGrid[Width][Depth] 
 class Grid {
 
 public:
@@ -44,13 +44,13 @@ public:
 	// wymiary grida
 	int Width, Depth;
 	
-	// zakres wysoko�ci
+	// zakres wysokosci
 	float MinHeight, MaxHeight;
 
-	// do przeskalowania wspolrzednej Y
+	// wspolczynnik skalujacy wspolrzedna Y - rozciaganie terenu w gore
 	float HeightScaleFactor;
 
-	// sluzy do przeskalowania wspolrzednych X , Z
+	// sluzy do przeskalowania wspolrzednych X , Z - rozciaganie swiata wszerz
 	float WorldScale;
 	
 
@@ -70,7 +70,7 @@ public:
 	// funkcja rysujaca teren
 	void Draw(Shader& shader);
 
-	// normalizacja wysokosci
+	// normalizacja wysokosci do przedzialu [MinHeight : MaxHeight]
 	void NormalizeGrid();
 
 
@@ -79,7 +79,7 @@ public:
 	float GetMinHeight();
 
 
-	// zwraca wierzcholek o podanych X,Z
+	// zwraca wierzcholek o danym indeksie w wektorze Vertices
 	GridVertex GetGridVertex(int index);
 
 	// generator terenu

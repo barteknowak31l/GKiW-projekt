@@ -34,21 +34,19 @@ public:
     vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     vector<Mesh>    meshes;             
 
-    DirectionalLight directionalLight;  // stores directionalLight affecting this model
+    DirectionalLight directionalLight;  // stores directionalLight 
     vector<PointLight> pointLights;     // stores pointLights that are affecting this model
 
     string directory;                   // path to model data folder
-    bool gammaCorrection;               // idk what is it
 
-    // constructor, expects a filepath to a 3D model.
-    Model(string const& path, bool gamma = false);
 
-    // draws the model, and thus all its meshes
+    Model(string const& path);
+
+    // draws all this model's meshes
     void Draw(Shader& shader);
 
 
     // light data is stored in Model object instead of being stored in every mesh object
-
     // set directional light data
     void setLightData(Light* light);
     
@@ -64,7 +62,7 @@ private:
     // intialize light data
     void setupLights();
 
-    // processes a node in a recursive fashion. Processes each individual mesh located at the node and repeats this process on its children nodes (if any).
+    // processes a node recursively
     void processNode(aiNode* node, const aiScene* scene);
 
     Mesh processMesh(aiMesh* mesh, const aiScene* scene);

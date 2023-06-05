@@ -5,7 +5,7 @@ in vec4 Color;
 in vec2 Tex;
 in vec3 Normal;
 in vec3 LocalPos;
-in vec3 FragPos;
+in vec3 WorldFragPos;
 
 uniform sampler2D terrainTexture;
 
@@ -15,6 +15,7 @@ uniform sampler2D terrainTextureLv0;
 uniform sampler2D terrainTextureLv1;
 uniform sampler2D terrainTextureLv2;
 uniform sampler2D terrainTextureLv3;
+
 //height levels
 uniform float lv0;
 uniform float lv1;
@@ -55,22 +56,18 @@ void main()
 {
 
     // diffuse 
-    vec3 Normal_ = normalize(Normal);
-
-    vec3 gReversedLightDir = vec3(lightDir.x, -lightDir.y, lightDir.z);
-
-    float Diffuse = max(dot(Normal_, gReversedLightDir),0);
-
-    Diffuse = max(0.3f, Diffuse);
+    vec3 norm = normalize(Normal);
+    float diff = max(dot(norm, -lightDir),0);
+    diff = max(0.3f, diff);
 
     vec4 texture = calcTexture();
 
     if(enableAirplaneFlashLight)
     {
-    	FragColor =  Diffuse * vec4(lightColor,1.0) * texture + texture * vec4(calcSpotLight(spotLight1),1.0) + texture *vec4(calcSpotLight(spotLight2),1.0);
+    	FragColor =  diff * vec4(lightColor,1.0) * texture + texture * vec4(calcSpotLight(spotLight1),1.0) + texture *vec4(calcSpotLight(spotLight2),1.0);
     }
     else{
-    	FragColor =  Diffuse * vec4(lightColor,1.0) * texture;
+    	FragColor =  diff * vec4(lightColor,1.0) * texture;
     }
 
 }
@@ -129,15 +126,14 @@ vec4 calcTexture()
 
 vec3 calcSpotLight(Spotlight l)
 {
-    vec3 lightDirection = normalize(l.position - FragPos);
+    vec3 lightDirection = normalize(l.position - WorldFragPos);
     
     float theta = dot(lightDirection, normalize(-l.direction));
     float epsilon   = l.cutOff - l.outerCutOff;
     float intensity = clamp((theta - l.outerCutOff) / epsilon, 0.0, 1.0); 
     
-    float distance    = length(l.position - FragPos);
-    float attenuation = 1.0 / (l.constant + l.linear * distance + 
-    		    l.quadratic * (distance * distance)); 
+    float distance    = length(l.position - WorldFragPos);
+    float attenuation = 1.0 / (l.constant + l.linear * distance + l.quadratic * (distance * distance)); 
 
 
         return l.color * intensity * attenuation;

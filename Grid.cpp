@@ -104,6 +104,8 @@ void Grid::PopulateBuffers()
 
 
 	int NumQuads = (Width - 1) * (Depth - 1);
+
+	// each quad == 2 triangles == 6 indices 
 	Indices.resize(NumQuads * 6);
 	InitIndices(Indices);
 
@@ -143,7 +145,7 @@ void Grid::NormalizeGrid(float minRange, float maxRange)
 		}
 	}
 
-	assert(max < min);
+	assert(max > min);
 
 	float minMaxDelta = max - min;
 	float minMaxRange = maxRange - minRange;
@@ -242,6 +244,7 @@ void Grid::CalcNormals(std::vector<GridVertex>& vertices, std::vector<unsigned i
 
 	}
 
+	// normalize normals
 	for (unsigned int i = 0; i < vertices.size(); i++)
 	{
 		float l = sqrt(vertices[i].Normal.x * vertices[i].Normal.x + vertices[i].Normal.y * vertices[i].Normal.y + vertices[i].Normal.z * vertices[i].Normal.z);

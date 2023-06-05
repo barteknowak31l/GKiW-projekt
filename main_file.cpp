@@ -7,6 +7,7 @@
 //				B - CLEAR CONSOLE WINDOW
 //				T - TOGGLE DAY/NIGHT CYCLE
 //				K - TOGGLE DRAW AIRPLANE MODEL
+//				U - TOGGLE DRAW BIRD TRANSFORM
 //				ESC - EXIT
 //				
 
@@ -50,7 +51,6 @@ bool DRAW_COLLIDERS = true;
 bool DRAW_AIRPLANE_MODEL = true;
 
 // camera settings
-const bool FIRST_PERSON = false;	// FIRST PERSON AKTUALNIE NIE DZIALA
 const bool FREE_CAM = false;
 const float FOV = 45.0f;
 
@@ -74,6 +74,7 @@ const glm::vec3 birdColliderSize = glm::vec3(12.0f, 8.0f, 12.0f);
 bool DAY_NIGHT_CYCLE = false;
 const float DAY_NIGHT_CYCLE_SPEED = 0.25f;
 bool PRINT_DEBUG_INFO = true;
+bool DRAW_BIRD_TRANSFORM = true;
 
 
 
@@ -105,11 +106,6 @@ Shader* terrainShader;
 Shader* skyboxShader;
 
 
-// Models
-Model* skull;
-Model* airplane_model;
-Model* bird_model;
-
 
 // objects
 Airplane* airPlane;
@@ -118,9 +114,7 @@ glm::vec3 startingPoint;	// starting point for an airplace
 glm::vec3 flashlightColor = glm::vec3(1.0f, 1.0f, 0.0f);
 float flashlightOffset = .5f;
 
-// skulls
-const int numOfSkulls = 10;
-Skull* skulls[numOfSkulls];
+
 
 // birds
 const int numOfBirds = 12;
@@ -130,22 +124,17 @@ Bird* birds[numOfBirds];
 
 // input
 bool input[6] = { false, false, false, false, false, false}; // is pressed?: w a s d UP DOWN
-// mouse input
-float lastX = SCR_WIDTH / 2.0f, lastY = SCR_HEIGHT / 2.0f;	// last cursor positon 
-bool firstMouseInput = true;
+
 
 
 
 // function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 unsigned int loadTexture(char const* path, int repeat);
 unsigned int loadCubemap(vector<std::string> faces);
 void loadTextures();
 void processInput();
 GLFWwindow* initOpenGL();
-void drawSkulls(glm::mat4 projection, glm::mat4 view, Shader *shader);
 void drawBirds(glm::mat4 projection, glm::mat4 view, Shader* shader);
 void drawTerrain(glm::mat4 projection, glm::mat4 view, Shader* shader);
 void drawAirplane(glm::mat4 projection, glm::mat4 view, Shader* shader);
@@ -153,7 +142,6 @@ void initLights();
 void initCamera();
 void initShaders();
 void initTerrain();
-void initSkulls();
 void initBirds();
 void initSkybox();
 void update(float deltaTime);
@@ -195,13 +183,15 @@ void init(GLFWwindow* window)
 		glTexParameterf(GL_TEXTURE_2D,
 			GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
 	}
+	else
+	{
+		debugMessage("Anisotropy disabled");
+	}
 
 	// make cursor attached to window
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	// set callbacks
-	glfwSetCursorPosCallback(window, mouse_callback);
-	glfwSetScrollCallback(window, scroll_callback);
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
@@ -215,10 +205,6 @@ void init(GLFWwindow* window)
 	debugMessage("initializing terrain");
 	initTerrain();
 	debugMessage("terrain initialized");
-
-	debugMessage("initializing skulls");
-	initSkulls();
-	debugMessage("skulls initialized");
 
 	debugMessage("initializing birds");
 	initBirds();
@@ -241,16 +227,11 @@ void init(GLFWwindow* window)
 		scale, flashlightColor, flashlightOffset,airPlaneColliderSize);
 
 	debugMessage("Airplane created");
-	//non player - to be tested
-	//airPlane = new Airplane("models/airplane/11804_Airplane_v2_l2.obj", glm::vec3(0.0f, 0.0f, -5.0f), AIRPLANE_SPEED, glm::vec3(AIRPLANE_SCALE, AIRPLANE_SCALE, AIRPLANE_SCALE));
-
 
 	// setup light for all models
 	debugMessage("initializing lights");
 	initLights();
 	debugMessage("lights initialized");
-
-
 
 	// to avoid wrong depth rendering
 	glEnable(GL_DEPTH_TEST);
@@ -266,15 +247,10 @@ void initCamera()
 	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 	glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-	float cameraSpeed = 20.0f; // not used
-	float pitch = 0.0f, yaw = -90.0f, roll = 0.0f;  //camera rotation angle
 	float fov = FOV;
-	const float sensitivity = 0.1f; //mouse sensitivity
 
-	// create camera - camera creation should be moved to AirPlane object for optimization and cleaner code
-	cam = new Camera(FREE_CAM, cameraPos, cameraUp, -90.0f, 0.0f);
-	cam->MovementSpeed = cameraSpeed;
-	cam->MouseSensitivity = sensitivity;
+	// create camera 
+	cam = new Camera(FREE_CAM, cameraPos, cameraUp);
 	cam->Zoom = fov;
 }
 void initShaders()
@@ -285,7 +261,6 @@ void initShaders()
 	terrainShader = new Shader("Shaders/terrain.vs", "Shaders/terrain.fs");
 	skyboxShader = new Shader("skybox.vs", "skybox.fs");
 }
-
 void initTerrain()
 {
 	// create terrain
@@ -306,81 +281,12 @@ void initTerrain()
 	worldPos = glm::vec3(grid->Width * grid->WorldScale / 2.0f, grid->GetMaxHeight() + 20.0f, grid->Depth * grid->WorldScale / 2.0f);
 	startingPoint = worldPos;
 }
-void initSkulls()
-{
-
-	float lightOffset = 30.0f;
-
-	// initialize skulls with random position and scale
-
-	float minXZ = -grid->Width * grid->WorldScale;
-	float maxXZ = grid->Width * grid->WorldScale;
-
-	float minY = startingPoint.y;
-	float maxY = minY + 10.0f;
-
-	float minScale = 1.0f;
-	float maxScale = 1.0f;
-
-	float minRGB = 0.5f;
-	float maxRGB = 1.0f;
-
-	float x = 0;
-	float y = 0;
-	float z = 0;
-	float s = 0;
-
-	// random light colors
-	float R = 0;
-	float G = 0; 
-	float B = 0;
-
-
-
-	glm::vec3 pos = glm::vec3(0,0,0);
-	glm::vec3 scale = glm::vec3(0,0,0);
-	glm::vec3 rotation = glm::vec3(0,0,0);
-
-	for (int i = 0; i < numOfSkulls; i++)
-	{
-		
-		x = minXZ + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxXZ - minXZ)));
-		y = minY + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxY - minY)));
-		z = minXZ + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxXZ - minXZ)));
-		s = minScale + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxScale - minScale)));
-
-		R = minRGB + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxRGB - minRGB)));
-		G = minRGB + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxRGB - minRGB)));
-		B = minRGB + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxRGB - minRGB)));
-
-
-		pos = glm::vec3(x, y, z) + startingPoint;
-		scale = glm::vec3(s, s, s);
-
-		skulls[i] = new Skull("models/skull/12140_Skull_v3_L2.obj", pos, lightCubeShader,skullColliderSize);
-
-
-		skulls[i]->light.light.position = pos +glm::vec3(lightOffset,lightOffset,0.0f);
-		skulls[i]->light.light.color = glm::vec3(R, G, B);
-		skulls[i]->light.light.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
-		skulls[i]->light.light.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
-		skulls[i]->light.light.specular = glm::vec3(1.0f, 1.0f, 1.0f);
-		skulls[i]->light.light.constant = 1.0f;
-		skulls[i]->light.light.linear = 0.014f;
-		skulls[i]->light.light.quadratic = 0.0007f;
-
-
-		skulls[i]->transform.setScale(scale);
-
-		
-	}
-}
 void initBirds()
 {
 
-	float lightOffset = 30.0f;
+	float lightOffset = 60.0f;
 
-	// initialize skulls with random position and scale
+	// initialize birds with random position and scale
 
 	float minXZ = -grid->Width * grid->WorldScale ;
 	float maxXZ = grid->Width * grid->WorldScale ;
@@ -397,14 +303,14 @@ void initBirds()
 	float x = 0;
 	float y = 0;
 	float z = 0;
-	float s = 0;
+	float s = 0;	// scale
+	float r = 0;	// rotation
 
 	// random light colors
 	float R = 0;
 	float G = 0;
 	float B = 0;
 
-	float r = 0;
 
 	glm::vec3 pos = glm::vec3(0, 0, 0);
 	glm::vec3 scale = glm::vec3(0, 0, 0);
@@ -433,14 +339,14 @@ void initBirds()
 		birds[i]->transform.SetRotation(rotation);
 
 
-		birds[i]->light.light.position = pos + glm::vec3(lightOffset, lightOffset, 0.0f);
-		birds[i]->light.light.color = glm::vec3(R, G, B);
-		birds[i]->light.light.ambient = glm::vec3(0.5f, 0.5f, 0.5f);
-		birds[i]->light.light.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
+		birds[i]->light.light.position = pos + glm::vec3(lightOffset, -lightOffset, 0.0f);
+		birds[i]->light.light.color = glm::vec3(R,G,B);
+		birds[i]->light.light.ambient = glm::vec3(1.0f, 1.0f, 1.0f);
+		birds[i]->light.light.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
 		birds[i]->light.light.specular = glm::vec3(1.0f, 1.0f, 1.0f);
 		birds[i]->light.light.constant = 1.0f;
-		birds[i]->light.light.linear = 0.014f;
-		birds[i]->light.light.quadratic = 0.0007f;
+		birds[i]->light.light.linear = 0.35f;
+		birds[i]->light.light.quadratic = 0.44f;
 
 
 		birds[i]->transform.setScale(scale);
@@ -450,7 +356,7 @@ void initBirds()
 }
 void initLights()
 {
-	//temporary light setup
+	// directional light setup
 	dirLight.light.direction = dirLightDirecrion;
 	dirLight.light.color = glm::vec3(1.0f, 1.0f, 1.0f);
 	dirLight.light.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
@@ -459,22 +365,9 @@ void initLights()
 	dirLight.setSunSpeed(DAY_NIGHT_CYCLE_SPEED);
 
 	light = &dirLight;		// universal light pointer is set to directional light
-
-	// light for skulls
-	for (int i = 0; i < numOfSkulls; i++)
-	{
-
-		PointerLight* p = &skulls[i]->light;
-		light = p;
-		skulls[i]->model->setLightData(light);
-
-		pointLights.push_back(*p);
-
-		light = &dirLight;
-		skulls[i]->model->setLightData(light);
-	}
-	light = &dirLight;
-	// for birds
+	
+							
+    // for birds
 	for (int i = 0; i < numOfBirds; i++)
 	{
 
@@ -488,6 +381,8 @@ void initLights()
 		birds[i]->model->setLightData(light);
 	}
 
+
+	// for airplane
 	light = &dirLight;
 	airPlane->model->setLightData(light);
 	airPlane->model->setLightData(pointLights, *lightCubeShader);
@@ -538,10 +433,15 @@ void drawSkybox(glm::mat4 projection, glm::mat4 view, Camera* camera) {
 	glDepthFunc(GL_LESS); // set depth function back to default
 }
 
+
+//float t = 0.0f;
 // DRAWING
 void drawTerrain(glm::mat4 projection, glm::mat4 view, Shader* shader)
 {
 	glm::mat4 model = glm::mat4(1.0f);
+
+	//t += deltaTime;
+	//model = glm::translate(model, glm::vec3(0.0f, 200.0f * glm::sin(t), 0.0f));
 
 
 	// set shader variables / uniforms
@@ -556,117 +456,49 @@ void drawTerrain(glm::mat4 projection, glm::mat4 view, Shader* shader)
 
 
 	//airplane light
-
 	airPlaneLightToShaderData(*shader);
-	//shader->setBool("enableAirplaneFlashLight", ENABLE_AIRPLANE_FLASHLIGHT);
-	//shader->setVec3("light1.position", airPlane->leftFlashlight.position);
-	//shader->setVec3("light1.direction", airPlane->leftFlashlight.direction);
-	//shader->setFloat("light1.cutOff", airPlane->leftFlashlight.cutOff);
-	//shader->setFloat("light1.outerCutOff", airPlane->leftFlashlight.outerCutOff);
-	//shader->setVec3("light1.color", airPlane->leftFlashlight.color);
-	//shader->setFloat("light1.constant", airPlane->leftFlashlight.constant);
-	//shader->setFloat("light1.linear", airPlane->leftFlashlight.linear);
-	//shader->setFloat("light1.quadratic", airPlane->leftFlashlight.quadratic);
-
-	//shader->setVec3("light2.position", airPlane->rightFlashlight.position);
-	//shader->setVec3("light2.direction", airPlane->rightFlashlight.direction);
-	//shader->setFloat("light2.cutOff", airPlane->rightFlashlight.cutOff);
-	//shader->setFloat("light2.outerCutOff", airPlane->rightFlashlight.outerCutOff);
-	//shader->setVec3("light2.color", airPlane->rightFlashlight.color);
-	//shader->setFloat("light2.constant", airPlane->rightFlashlight.constant);
-	//shader->setFloat("light2.linear", airPlane->rightFlashlight.linear);
-	//shader->setFloat("light2.quadratic", airPlane->rightFlashlight.quadratic);
-
 
 	grid->Draw(*shader);
 }
-void drawSkulls(glm::mat4 projection, glm::mat4 view, Shader* shader)
-{
-	// model matrix
-	glm::mat4 model = glm::mat4(1.0f);
-
-	// RENDER SKULL MODEL
-	// start using model shader
-	shader->use();
-	shader->setMat4("projection", projection);
-	shader->setMat4("view", view);
-
-	for (int i = 0; i < numOfSkulls; i++)
-	{
-
-		model = glm::mat4(1.0f);
-
-		model = glm::translate(model, skulls[i]->transform.Position); // translate it down so it's at the center of the scene
-		model = glm::rotate(model,skulls[i]->transform.Pitch,glm::vec3(1.0f,0.0f,0.0f));
-		model = glm::rotate(model,skulls[i]->transform.Yaw,glm::vec3(0.0f,1.0f,0.0f));
-		model = glm::rotate(model,skulls[i]->transform.Roll,glm::vec3(0.0f,0.0f,1.0f));
-		model = glm::scale(model, skulls[i]->transform.scale);	// it's a bit too big for our scene, so scale it down
-		model = glm::rotate(model, -glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		shader->use();
-		shader->setMat4("model", model);
-		skulls[i]->model->Draw(*shader);
-
-		skulls[i]->drawLight(projection, view);
-
-	}
-
-
-}
-
-
 void drawBirds(glm::mat4 projection, glm::mat4 view, Shader* shader)
 {
 	// model matrix
 	glm::mat4 model = glm::mat4(1.0f);
 
-	// start using model shader
-	shader->use();
-	shader->setMat4("projection", projection);
-	shader->setMat4("view", view);
 	airPlaneLightToShaderData(*shader);
 
 	for (int i = 0; i < numOfBirds; i++)
 	{
 
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, birds[i]->transform.Position); // translate it down so it's at the center of the scene
+		model = glm::translate(model, birds[i]->transform.Position); // translate bird to its position iw world space
 
-		model = birds[i]->transform.rotateToFrontMatrix(model);
-		model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0, 1.0, 0.0));
+		model = birds[i]->transform.rotateToFrontMatrix(model);	// rotate the model to face the front vector
+		model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0, 1.0, 0.0));	// prepared model is initialy rotated by 180deg on Y axis, so fix it
 
 		model = glm::scale(model, birds[i]->transform.scale);	// it's a bit too big for our scene, so scale it down
 
 		shader->use();
 		shader->setMat4("model", model);
+		shader->setVec3("viewPos", cam->transform.Position);
 		birds[i]->model->Draw(*shader);
 
 		birds[i]->drawLight(projection, view);
 
+		if(DRAW_BIRD_TRANSFORM)
 		birds[i]->transform.draw(*lightCubeShader,4.0f);
 
 	}
-
-
-
-
-
 
 }
 void drawAirplane(glm::mat4 projection, glm::mat4 view, Shader* shader)
 {
 
-	//airPlane->checkTerrainCollision(grid);
-	//printf("POZYCJA Y: %f\tWYSOKOSC TERENU: %f\n", airPlane->GetCollider(1).Position.y, airPlane->checkTerrainCollision(grid,airPlane->GetCollider(1)));
-	//debugMessage("POZYCJA Y: " + std::to_string(airPlane->GetCollider(1).Position.y) + "\tWYSOKOSC TERENU: " + std::to_string(airPlane->checkTerrainCollision(grid, airPlane->GetCollider(1))));
-	//debugMessage("POZYCJA X: " + std::to_string(airPlane->transform.Position.x) + "\tPOZYCJA Y: " + std::to_string(airPlane->transform.Position.y));
-
-	// RENDER AIRPLANE MODEL
 	glm::mat4 model = glm::mat4(1.0f);
-
 	model = airPlane->calcModelMatrix(model);
-
 	shader->use();
 	shader->setMat4("model", model);
+	shader->setVec3("viewPos", cam->transform.Position);
 	airPlane->model->Draw(*shader);
 
 
@@ -686,16 +518,12 @@ void drawAirplane(glm::mat4 projection, glm::mat4 view, Shader* shader)
 		airPlaneLight->draw(*lightCubeShader);
 	}
 
-	// draw helper cube
+	// draw helper cube - was used for debug
 	//lightCubeShader->use();
 	//lightCubeShader->setMat4("projection", projection);
 	//lightCubeShader->setMat4("view", view);
-
 	//airPlaneLight->light.position = airPlane->transform.Position;
 	//airPlaneLight->draw(*lightCubeShader);
-
-
-
 }
 
 // MAIN DRAW FUNCTION
@@ -704,7 +532,6 @@ void drawScene(GLFWwindow* window)
 	// clear window
 	glClearColor(0.03f, 0.03f, 0.03f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
 	// view/projection transformations
 	glm::mat4 projection = glm::perspective(glm::radians(cam->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 1.0f, (float)grid->Width * grid->Depth * grid->WorldScale);
@@ -717,8 +544,6 @@ void drawScene(GLFWwindow* window)
 	modelShader->use();
 	modelShader->setMat4("projection", projection);
 	modelShader->setMat4("view", view);
-
-	//drawSkulls(projection, view, modelShader);
 
 	if(DRAW_AIRPLANE_MODEL)
 	drawAirplane(projection, view, modelShader);
@@ -741,14 +566,6 @@ void update(float deltaTime)
 		dirLight.dayNight(deltaTime);
 
 		//update lights
-			// light for skulls
-		for (int i = 0; i < numOfSkulls; i++)
-		{
-			light = &dirLight;
-			skulls[i]->model->setLightData(light);
-		}
-		
-
 		for (int i = 0; i < numOfBirds; i++)
 		{
 			light = &dirLight;
@@ -757,6 +574,7 @@ void update(float deltaTime)
 
 		light = &dirLight;
 		airPlane->model->setLightData(light);
+		airPlane->model->setLightData(pointLights, *lightCubeShader);
 	}
 
 
@@ -880,6 +698,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		DRAW_AIRPLANE_MODEL = !DRAW_AIRPLANE_MODEL;
 	}
 
+	// toggle DRAW_BIRD_TRANSFORM
+	if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
+	{
+		DRAW_BIRD_TRANSFORM = !DRAW_BIRD_TRANSFORM;
+	}
+
 
 	// clear console
 	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)
@@ -892,7 +716,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		#endif
 	}
 
-	// AIRPLANE MOVEMENT
+	// AIRPLANE MOVEMENT RELEASE
 	if (key == GLFW_KEY_A && action == GLFW_RELEASE)
 	{
 		airPlane->onMovementRelease(Move_direction::M_LEFT);
@@ -963,30 +787,6 @@ void processInput()
 
 }
 
-// mouse movement input callback for camera movement - may be used in first person camera
-void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-
-	if (firstMouseInput) // initially set to true
-	{
-		lastX = xpos;
-		lastY = ypos;
-		firstMouseInput = false;
-	}
-
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos; // reversed since y-coordinates range from bottom to top
-	lastX = xpos;
-	lastY = ypos;
-
-	cam->ProcessMouseMovement(xoffset, yoffset);
-
-}
-
-// mouse scroll input callback - camera zoom
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-	cam->ProcessMouseScroll(yoffset);
-}
 
 
 
@@ -1014,10 +814,8 @@ unsigned int loadTexture(char const* path, int repeat)
 		glBindTexture(GL_TEXTURE_2D, textureID);
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
-
-		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);							// przetestowac mirrored repeat na teksturze terenu
+					
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, repeat);
-		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, repeat);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -1080,6 +878,7 @@ void airPlaneLightToShaderData(Shader& shader)
 	shader.use();
 
 	shader.setBool("enableAirplaneFlashLight", ENABLE_AIRPLANE_FLASHLIGHT);
+
 	shader.setVec3("spotLight1.position", airPlane->leftFlashlight.position);
 	shader.setVec3("spotLight1.direction", airPlane->leftFlashlight.direction);
 	shader.setFloat("spotLight1.cutOff", airPlane->leftFlashlight.cutOff);

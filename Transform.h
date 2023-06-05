@@ -20,7 +20,7 @@
 // initial Euler angles 
 // initial _YAW set to -90.0f to make objects face Z coordinate (in this case - front of the object faces -Z axis - object "looks into screen"
 const float _PITCH = 0.0f;
-const float _YAW = -90.0f;
+const float _YAW =  0.0f;
 const float _ROLL = 0.0f;
 
 // declaractrion of possible move() inputs
@@ -356,6 +356,7 @@ private:
 
 
         swapY = (Pitch > 90.0f && Pitch < 270.0f) || (Pitch < -90.0f && Pitch > -270.0f);
+       
 
         if (swapY)
         {

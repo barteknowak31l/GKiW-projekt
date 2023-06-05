@@ -21,8 +21,8 @@ using namespace std;
 
 class Model;
 
-// MAX NUMBER OF POINT LIGHTS SEND TO SHADER
-#define MAX_NUM_LIGHTS 10
+// MAX NUMBER OF POINT LIGHTS SEND TO SHADER - SHOULD EQUAL NUMBER OF BIRDS IN SCENE
+#define MAX_NUM_LIGHTS 12
 
 // Stores values for light calculations - read from model file
 struct Material {
@@ -40,10 +40,7 @@ struct Vertex {
     glm::vec3 Normal;
     // texCoords
     glm::vec2 TexCoords;
-    // tangent
-    glm::vec3 Tangent;
-    // bitangent
-    glm::vec3 Bitangent;
+
 };
 
 // stores textures data
@@ -85,9 +82,9 @@ private:
 
     // shader: TEXTURE NAMING CONVENTION
     // i.e 
-    // textureDiffuse1 - texture+Type+number( starting from 1 )
-    // textureSpecular1
-    // textureHeight2 etc.
+    // texture_diffuse1 - texture+type+number( starting from 1 )
+    // texture_specular1
+    // etc.
 
     // sends uniform data from Material struct to shader program
     void sendMaterialToShader(Shader& shader);

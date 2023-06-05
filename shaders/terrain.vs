@@ -17,20 +17,20 @@ out vec4 Color;
 out vec2 Tex;
 out vec3 Normal;
 out vec3 LocalPos;
-out vec3 FragPos;
+out vec3 WorldFragPos;
 
 void main()
 {
 	// alternatywne kolorowanie na bazie wysokosci - mozna uzyc gdy nie ma tekstury
-	float deltaHeight = maxHeight - minHeight;
-	float HeightRatio = (aPos.y - minHeight) / deltaHeight;
-	float c = HeightRatio * 0.8 + 0.2;
-	Color = vec4(c,c,c,1.0);
+	//float deltaHeight = maxHeight - minHeight;
+	//float HeightRatio = (aPos.y - minHeight) / deltaHeight;
+	//float c = HeightRatio * 0.8 + 0.2;
+	//Color = vec4(c,c,c,1.0);
 
 	Tex = aTexCoords;
 
 	LocalPos = aPos;
-	FragPos =  vec3(model * vec4(aPos, 1.0));
+	WorldFragPos =  vec3(model * vec4(aPos, 1.0));
 
     Normal = mat3(transpose(inverse(model))) * aNormal;
 

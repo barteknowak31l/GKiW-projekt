@@ -14,11 +14,8 @@
 #include <vector>
 #include <algorithm>
 
-// Interface for representing 3d objects
-// Handles local transform and model data separately
-// 
-
-
+// Abstract superclass for representing 3d objects
+// Keeps transform(world), collision and model data separately
 class GameObject
 {
 

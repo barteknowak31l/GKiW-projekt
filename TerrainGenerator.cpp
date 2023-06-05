@@ -26,9 +26,6 @@ void TerrainGenerator::CreateFaultFormation(Grid& grid, int iterations, float fi
 		int dirZ = p2.z - p1.z;
 
 
-
-
-
 		for (int z = 0; z < grid.Width; z++)
 		{
 			for (int x = 0; x < grid.Depth; x++)
